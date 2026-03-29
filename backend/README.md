@@ -18,7 +18,7 @@ Main wiring: `src/index.ts` calls `initTwilioPhoneChannel`, `initAmazonConnectPh
 - **Multi-channel voice support**:
   - 🌐 **Web**: Socket.IO `/realtime-voice`
   - 📞 **Twilio**: TwiML `/incoming-call` + WebSocket `/media-stream`
-  - ☁️ **Amazon Connect + OpenAI SIP** (optional): HTTP webhook `.../incoming-call` for `realtime.call.incoming`
+  - ☁️ **Amazon Connect + OpenAI SIP**: HTTP webhook `.../incoming-call` for `realtime.call.incoming`
 - **Realtime Voice Interaction**: Bi-directional audio streaming with OpenAI's Realtime API
 - **Multi-Agent System**: Intelligent routing and handoff between specialized agents
 - **MCP Server Integration**: Integration with Model Context Protocol (MCP) servers for tool access
@@ -56,7 +56,7 @@ TWILIO_PHONE_ENABLE=false
 # Example: wss://ai-voice-agent.ilikeai.ca/media-stream
 TWILIO_WEBHOOK_URL=wss://your-domain.com/media-stream
 
-# Amazon Connect + OpenAI SIP (optional)
+# Amazon Connect + OpenAI SIP
 AMAZON_CONNECT_PHONE_ENABLE=false
 # AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-openai-voice-agent
 # AMAZON_CONNECT_SDK_ENABLE=false
