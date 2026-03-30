@@ -10,8 +10,3 @@ export const initAmazonConnectPhoneChannel = (app: Express): void => {
   registerOpenAiSipWebhookRoutes(app)
   initAmazonConnectClient()
 }
-
-export {
-  registerOpenAiSipWebhookRoutes,
-  getOpenAiSipWebhookBasePath,
-} from './openai-sip-webhook'

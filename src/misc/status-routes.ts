@@ -1,6 +1,5 @@
 import type { Express, Request, Response } from 'express'
 import { mcpServerList } from '@/foundation/mcp-server'
-import { AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH_DEFAULT } from '@/service/amazon-connect-phone/constants'
 import { TWILIO_PHONE_INCOMING_CALL_PATH } from '@/service/twilio-phone/constants'
 
 export interface StatusServiceRow {
@@ -33,9 +32,7 @@ export const buildStatusPayload = (req: Request, port: number) => {
   const twilioWebhookUrl = process.env.TWILIO_WEBHOOK_URL || ''
 
   const connectPhoneEnabled = process.env.AMAZON_CONNECT_PHONE_ENABLE === 'true'
-  const connectWebhookBase =
-    process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH ||
-    AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH_DEFAULT
+  const connectWebhookBase = process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH
   const connectIncomingUrl = `${base}${connectWebhookBase}/incoming-call`
 
   const connectSdkEnabled = process.env.AMAZON_CONNECT_SDK_ENABLE === 'true'
@@ -55,7 +52,10 @@ export const buildStatusPayload = (req: Request, port: number) => {
         ? 'TwiML + Media Stream'
         : 'Set TWILIO_PHONE_ENABLE=true and TWILIO_WEBHOOK_URL',
       endpoints: [
-        { label: 'TwiML webhook (voice)', url: `${base}${TWILIO_PHONE_INCOMING_CALL_PATH}` },
+        {
+          label: 'TwiML webhook (voice)',
+          url: `${base}${TWILIO_PHONE_INCOMING_CALL_PATH}`,
+        },
         ...(twilioWebhookUrl
           ? [{ label: 'Media Stream (WebSocket)', url: twilioWebhookUrl }]
           : []),

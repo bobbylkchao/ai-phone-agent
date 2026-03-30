@@ -1,15 +1,6 @@
 import type { Express } from 'express'
 import logger from '@/misc/logger'
-import { AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH_DEFAULT } from '../constants'
 import { handleOpenAiSipIncomingCallWebhook } from './webhook/incoming-call'
-
-/**
- * Base path for OpenAI Realtime SIP webhook routes.
- * Override with AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH.
- */
-export const getOpenAiSipWebhookBasePath = (): string =>
-  process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH ||
-  AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH_DEFAULT
 
 /**
  * Registers POST .../incoming-call for OpenAI `realtime.call.incoming`.
@@ -23,6 +14,15 @@ export const registerOpenAiSipWebhookRoutes = (app: Express): void => {
     return
   }
 
-  const base = getOpenAiSipWebhookBasePath()
-  app.post(`${base}/incoming-call`, handleOpenAiSipIncomingCallWebhook)
+  if (!process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH) {
+    logger.error(
+      '[AmazonConnectPhone] AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH is not set'
+    )
+    return
+  }
+
+  app.post(
+    `${process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH}/incoming-call`,
+    handleOpenAiSipIncomingCallWebhook
+  )
 }
