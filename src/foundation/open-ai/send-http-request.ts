@@ -10,7 +10,7 @@ export const sendHttpRequestToOpenAi = async (
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not set')
   }
-  return await fetch(url, {
+  return fetch(url, {
     method,
     headers: {
       Authorization: `Bearer ${apiKey}`,

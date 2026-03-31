@@ -1,6 +1,6 @@
+import WebSocket from 'ws'
 import { getErrorMessage } from '@/misc/get-error-message'
 import logger from '@/misc/logger'
-import WebSocket from 'ws'
 import {
   sendResponseCreateEvent,
   sendSessionUpdateSpeed,

@@ -17,10 +17,10 @@ export const hotelInfoSearchTool = tool({
       .nullish()
       .describe('The hotel information query (optional)'),
   }),
-  execute: async () => {
+  execute: async () => 
     // Return predefined hotel information
     // This matches the information from hotelInfoSearchAgent instructions
-    return JSON.stringify({
+     JSON.stringify({
       hotelName: 'Holiday Inn New York City - Times Square',
       address: '123 Main St, New York, NY 10001',
       roomPrice: '$100 per night',
@@ -45,5 +45,5 @@ export const hotelInfoSearchTool = tool({
         newarkAirport: '30 km',
       },
     })
-  },
+  ,
 })

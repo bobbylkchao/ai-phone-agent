@@ -8,9 +8,7 @@ import logger from '@/misc/logger'
 
 const greetingRecord = new Map<string, boolean>()
 
-const isGreetingSent = (callId: string) => {
-  return greetingRecord.get(callId) || false
-}
+const isGreetingSent = (callId: string) => greetingRecord.get(callId) || false
 
 const setGreetingSent = (callId: string) => {
   greetingRecord.set(callId, true)

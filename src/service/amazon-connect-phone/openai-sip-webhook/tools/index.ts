@@ -30,14 +30,12 @@ export const getRealtimeToolsConfig = (): Array<{
   name: string
   description: string
   parameters: unknown
-}> => {
-  return voiceAgentTools.map((tool) => ({
+}> => voiceAgentTools.map((tool) => ({
     type: 'function' as const,
     name: tool.name,
     description: tool.description,
     parameters: tool.parametersJsonSchema,
   }))
-}
 
 export const executeTool = async (
   callId: string,

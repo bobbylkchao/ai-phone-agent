@@ -17,13 +17,13 @@ export const hotelBookingTool = tool({
     numberOfGuests: z.number().nullish().describe('Number of guests'),
     numberOfRooms: z.number().nullish().describe('Number of rooms'),
   }),
-  execute: async (input) => {
+  execute: async (input) => 
     // For now, return a confirmation message
     // In production, this would process the actual booking
-    return JSON.stringify({
+     JSON.stringify({
       status: 'success',
       message: 'Hotel booking request received',
       details: input,
     })
-  },
+  ,
 })

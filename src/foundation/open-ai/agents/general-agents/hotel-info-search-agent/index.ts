@@ -1,7 +1,6 @@
 import { RealtimeAgent } from '@openai/agents-realtime'
 
-export const hotelInfoSearchAgent = (): RealtimeAgent => {
-  return new RealtimeAgent({
+export const hotelInfoSearchAgent = (): RealtimeAgent => new RealtimeAgent({
     name: 'Hotel Info Search Agent',
     voice: 'cedar',
     instructions: `
@@ -31,4 +30,3 @@ export const hotelInfoSearchAgent = (): RealtimeAgent => {
       - Keep responses concise and fast
     `,
   })
-}

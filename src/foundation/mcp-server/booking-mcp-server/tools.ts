@@ -111,7 +111,7 @@ export const registerTools = (mcpServer: McpServer) => {
           const output = {
             maxTemperature: maxTemp,
             minTemperature: minTemp,
-            precipitation: precipitation,
+            precipitation,
           }
           return {
             content: [{ type: 'text', text: JSON.stringify(output) }],

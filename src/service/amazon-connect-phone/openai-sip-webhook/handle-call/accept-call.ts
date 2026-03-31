@@ -1,11 +1,11 @@
 import logger from '@/misc/logger'
 import { getErrorMessage } from '@/misc/get-error-message'
+import { sendHttpRequestToOpenAi } from '@/foundation/open-ai/send-http-request'
 import { getPhoneAgentInstructions } from '../agents/entry-agent'
 import type { AmazonConnectOpenAiVoiceAgentMetaData } from '../types'
 import { setContactId } from '../call-store'
 import { getRealtimeToolsConfig } from '../tools'
 import { connectOpenAiSipRealtimeWebSocket } from '../websocket/connect-to-call'
-import { sendHttpRequestToOpenAi } from '@/foundation/open-ai/send-http-request'
 
 export interface AcceptOpenAiSipCallParams {
   callId: string

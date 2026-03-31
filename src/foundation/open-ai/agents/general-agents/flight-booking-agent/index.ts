@@ -1,7 +1,6 @@
 import { RealtimeAgent } from '@openai/agents-realtime'
 
-export const flightBookingAgent = (): RealtimeAgent => {
-  return new RealtimeAgent({
+export const flightBookingAgent = (): RealtimeAgent => new RealtimeAgent({
     name: 'Flight Booking Agent',
     voice: 'cedar',
     instructions: `
@@ -11,4 +10,3 @@ export const flightBookingAgent = (): RealtimeAgent => {
       4. Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
     `,
   })
-}

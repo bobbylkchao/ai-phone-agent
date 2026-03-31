@@ -4,8 +4,7 @@ import { DEFAULT_BRAND } from '@/service/amazon-connect-phone/openai-sip-webhook
  * This provides concrete examples of how the agent should interact with customers
  */
 
-export const getConversationExample = (phoneNumber: string): string => {
-  return `
+export const getConversationExample = (phoneNumber: string): string => `
 Here are examples of real conversations for different scenarios.
 
 **Pattern you MUST follow every time the customer speaks (except the very first greeting):**
@@ -95,4 +94,3 @@ Here are examples of real conversations for different scenarios.
 - [checkout_expert returns: status="ready_for_checkout"]
 - Phone Agent: Perfect! I have all the information I need. I can transfer you to one of our agents who can assist you with the checkout process right away. Or, if you prefer, I can send you an email checkout link so you can complete it at your convenience. Which option works better for you?
 `.trim()
-}

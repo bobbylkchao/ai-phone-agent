@@ -18,13 +18,13 @@ export const postBookingTool = tool({
       .describe('Action to perform on the booking'),
     details: z.string().nullish().describe('Additional details for the action'),
   }),
-  execute: async (input) => {
+  execute: async (input) => 
     // For now, return a confirmation message
     // In production, this would process the actual booking action
-    return JSON.stringify({
+     JSON.stringify({
       status: 'success',
       message: 'Post booking request received',
       details: input,
     })
-  },
+  ,
 })

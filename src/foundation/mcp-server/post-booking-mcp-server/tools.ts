@@ -23,7 +23,7 @@ export const registerTools = (mcpServer: McpServer) => {
           '[Post Booking MCP Server/Tool Call] Canceling booking'
         )
         const output = {
-          success: bookingId === '1234' ? false : true,
+          success: bookingId !== '1234',
         }
         return {
           content: [{ type: 'text', text: JSON.stringify(output) }],
