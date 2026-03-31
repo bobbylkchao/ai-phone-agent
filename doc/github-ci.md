@@ -2,6 +2,8 @@
 
 Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
+`npm ci` reads [`.npmrc`](../.npmrc). **`legacy-peer-deps=true`** is set so installs succeed: `@kesills/eslint-config-airbnb-typescript` declares a peer on ESLint 8 while this repo uses ESLint 9 (same resolution as local `npm install`).
+
 ## What runs on a PR
 
 1. **Prettier** — `npm run format`. If files change:
