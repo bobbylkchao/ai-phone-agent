@@ -11,6 +11,8 @@ alwaysApply: true
 
 # Conventions
 
+- **Linting:** `eslint.config.mjs` extends **Airbnb base** + **@kesills/eslint-config-airbnb-typescript** (TypeScript layer) + **eslint-config-prettier**. Run `npm run lint`; new code should pass.
+- **TypeScript style** (arrow functions, callbacks): `.cursor/rules/typescript-style.mdc` applies when you edit `src/**/*.ts(x)`.
 - Prefer **small, task-focused changes**; match existing patterns and naming.
 - Imports: **`@/*` maps to `src/*`**. After `npm run build`, `tsc-alias` rewrites paths in `dist/`.
 - **New tools** (Connect Realtime): add Zod + `parametersJsonSchema`, export tool, register in `openai-sip-webhook/tools/index.ts`.

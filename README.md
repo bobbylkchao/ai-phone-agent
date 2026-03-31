@@ -74,6 +74,7 @@ See **`.env.example`**. Typical keys:
 | [doc/twilio-integration.md](./doc/twilio-integration.md) | Twilio |
 | [doc/amazon-connect-openai-webhook.md](./doc/amazon-connect-openai-webhook.md) | Connect + OpenAI SIP |
 | [doc/local-testing-twilio-and-amazon-connect-sip.md](./doc/local-testing-twilio-and-amazon-connect-sip.md) | ngrok / tunnels |
+| [doc/github-ci.md](./doc/github-ci.md) | PR checks (Prettier, ESLint) & branch protection |
 
 ## AI coding assistants (Cursor / Claude Code)
 
@@ -85,7 +86,8 @@ See **`.env.example`**. Typical keys:
 
 - `npm run dev` — nodemon
 - `npm run build` / `npm run start` — compile + `node dist/index.js`
-- `npm run lint` — ESLint
+- `npm run lint` — ESLint with `--fix` (Airbnb + TS + Prettier; see `eslint.config.mjs`)
+- `npm run lint:ci` — ESLint strict (`--max-warnings 0`, no fix); used in CI
 - `npm run format` — Prettier
 
 ## License

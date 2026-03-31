@@ -1,0 +1,81 @@
+# CI for pull requests: Prettier (optional auto-commit) + ESLint (fail on errors/warnings).
+# "Require PR before merge" is configured in GitHub → Settings → Branches (see doc/github-ci.md).
+
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply Prettier
+        run: npm run format
+
+      - name: Commit and push formatting (same-repo PRs only)
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No Prettier changes."
+            exit 0
+          fi
+          git add -A
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "::error title=Formatting required::Prettier changed files. Fork PRs cannot receive pushes from Actions. Run \`npm run format\` locally and push to your branch."
+            exit 1
+          fi
+          git commit -m "style: apply Prettier (automated)"
+          git push
+
+  lint:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head branch (latest, includes any format push)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint (fail on errors or warnings)
+        run: npm run lint:ci
