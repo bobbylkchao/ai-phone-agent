@@ -5,13 +5,11 @@ import { getContactId, deleteCall } from '../call-store'
 import { hangUpOpenAiSipCall } from '../handle-call/hang-up-call'
 import { closeOpenAiSipWebSocketForCall } from '../websocket/connect-to-call'
 
+const summaryDescribe =
+  'Audit summary (no PII): never include the caller’s real name, email, phone, or other identifiers—refer to the caller only as "Customer". State who chose to end the session: "Customer" or "AI agent". Then state briefly why the conversation stopped (e.g. declined to continue planning, goal completed, frustration). Example: "Initiator: Customer. Reason: decided not to proceed with trip planning."'
+
 const disconnectTheCallParams = z.object({
-  summary: z
-    .string()
-    .optional()
-    .describe(
-      'Brief session summary for audit/review: what the customer wanted, outcome, and any notable details.'
-    ),
+  summary: z.string().optional().describe(summaryDescribe),
 })
 
 export const disconnectTheCallParametersJsonSchema = {
@@ -19,8 +17,7 @@ export const disconnectTheCallParametersJsonSchema = {
   properties: {
     summary: {
       type: 'string',
-      description:
-        'Brief session summary for audit/review: what the customer wanted, outcome, and any notable details.',
+      description: summaryDescribe,
     },
   },
   additionalProperties: false,
@@ -33,7 +30,7 @@ export const disconnectTheCallParametersJsonSchema = {
 export const disconnectTheCallTool = {
   name: 'disconnect_the_call',
   description:
-    "Call this only when the customer explicitly wants to end the call—e.g. 'thanks, bye', 'I'm done', 'goodbye', or equivalent. Do not call this if only you suggested ending; the customer must have indicated they are finished. Provide a brief summary for audit/review.",
+    "Call this only when the customer explicitly wants to end the call—e.g. 'thanks, bye', 'I'm done', 'goodbye', or equivalent. Do not call this if only you suggested ending; the customer must have indicated they are finished. Provide `summary` for audit: no real names or PII (use 'Customer' only); say who chose to end (Customer vs AI agent); say why the conversation did not continue.",
   parameters: disconnectTheCallParams,
   parametersJsonSchema: disconnectTheCallParametersJsonSchema,
   execute: async (callId: string, args: unknown): Promise<void> => {

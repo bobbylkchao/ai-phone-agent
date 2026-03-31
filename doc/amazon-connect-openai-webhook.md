@@ -77,7 +77,7 @@ If `AMAZON_CONNECT_SDK_ENABLE` is not `true` or the client fails to init, the to
 **Attributes (when the SDK path runs):**
 
 - **`transfer_to_human_agent`:** `AIVoiceAgentHandoff` = `"true"`; `AIVoiceAgentConversationSummary` = optional model `summary` for the next agent; `AIVoiceAgentHandoffPayload` = JSON string of trip intake (from `update_trip_intake`).
-- **`disconnect_the_call`:** `AIVoiceAgentHandoff` = `"false"`; `AIVoiceAgentConversationSummary` = optional model `summary` for audit/review.
+- **`disconnect_the_call`:** `AIVoiceAgentHandoff` = `"false"`; `AIVoiceAgentConversationSummary` = optional model `summary` for audit (no PII—use “Customer” only; who ended: Customer vs AI agent; brief reason).
 
 ## Customizing behavior
 
