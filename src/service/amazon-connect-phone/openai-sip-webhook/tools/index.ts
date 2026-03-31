@@ -4,6 +4,7 @@ import {
   sendFunctionCallOutput,
   sendResponseCreateEvent,
 } from '../client-side-events'
+import { queueDisconnectToolArguments } from '../websocket/disconnect-hangup-scheduler'
 import { queueTransferToolArguments } from '../websocket/transfer-hangup-scheduler'
 import { disconnectTheCallTool } from './disconnect-the-call'
 import { transferToHumanAgentTool } from './transfer-to-human-agent'
@@ -89,6 +90,13 @@ export const handleMessageIfToolCall = async (
     const raw = m.item.arguments
     const argsJson = typeof raw === 'string' ? raw : JSON.stringify(raw ?? {})
     queueTransferToolArguments(callId, argsJson)
+    return true
+  }
+
+  if (toolName === disconnectTheCallTool.name) {
+    const raw = m.item.arguments
+    const argsJson = typeof raw === 'string' ? raw : JSON.stringify(raw ?? {})
+    queueDisconnectToolArguments(callId, argsJson)
     return true
   }
 

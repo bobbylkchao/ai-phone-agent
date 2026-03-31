@@ -26,35 +26,49 @@ export const disconnectTheCallParametersJsonSchema = {
 /**
  * Ends the call when the customer clearly wants to hang up.
  * Optionally sets Amazon Connect contact attributes when the SDK client is initialized.
+ *
+ * For SIP, prefer scheduling via `disconnect-hangup-scheduler` so hangup runs after assistant
+ * audio finishes (see `runDisconnectTheCallHangup`).
  */
+export const runDisconnectTheCallHangup = async (
+  callId: string,
+  rawArgs: string | Record<string, unknown>
+): Promise<void> => {
+  const args =
+    typeof rawArgs === 'string'
+      ? (JSON.parse(rawArgs || '{}') as Record<string, unknown>)
+      : rawArgs
+  const parsed = disconnectTheCallParams.parse(args ?? {})
+  const contactId = getContactId(callId)
+
+  if (contactId && process.env.AMAZON_CONNECT_SDK_ENABLE === 'true') {
+    await updateContactAttributes(contactId, {
+      AIVoiceAgentHandoff: 'false',
+      AIVoiceAgentConversationSummary: parsed.summary ?? '',
+    })
+    logger.info(
+      { callId, contactId },
+      '[AmazonConnectPhone] Contact attributes updated for disconnect'
+    )
+  }
+
+  closeOpenAiSipWebSocketForCall(callId)
+  deleteCall(callId)
+  await hangUpOpenAiSipCall(callId, contactId ?? '')
+
+  logger.info(
+    { callId, contactId },
+    '[AmazonConnectPhone] disconnect_the_call completed'
+  )
+}
+
 export const disconnectTheCallTool = {
   name: 'disconnect_the_call',
   description:
-    "Call this only when the customer explicitly wants to end the call—e.g. 'thanks, bye', 'I'm done', 'goodbye', or equivalent. Do not call this if only you suggested ending; the customer must have indicated they are finished. Provide `summary` for audit: no real names or PII (use 'Customer' only); say who chose to end (Customer vs AI agent); say why the conversation did not continue.",
+    "Use only when the customer clearly wants to end the call (e.g. thanks/bye/done/goodbye). Do not use if only you suggested hanging up. **Before calling this tool, you must speak a short polite closing in the same assistant turn** (thank them and say goodbye in the call language)—never emit only this tool with no spoken audio. If their last utterance had no transcript, still say a brief goodbye, then call this. Provide `summary` for audit: no real names or PII (use 'Customer' only); who chose to end (Customer vs AI agent); why the conversation stopped.",
   parameters: disconnectTheCallParams,
   parametersJsonSchema: disconnectTheCallParametersJsonSchema,
   execute: async (callId: string, args: unknown): Promise<void> => {
-    const parsed = disconnectTheCallParams.parse(args ?? {})
-    const contactId = getContactId(callId)
-
-    if (contactId && process.env.AMAZON_CONNECT_SDK_ENABLE === 'true') {
-      await updateContactAttributes(contactId, {
-        AIVoiceAgentHandoff: 'false',
-        AIVoiceAgentConversationSummary: parsed.summary ?? '',
-      })
-      logger.info(
-        { callId, contactId },
-        '[AmazonConnectPhone] Contact attributes updated for disconnect'
-      )
-    }
-
-    closeOpenAiSipWebSocketForCall(callId)
-    deleteCall(callId)
-    await hangUpOpenAiSipCall(callId, contactId ?? '')
-
-    logger.info(
-      { callId, contactId },
-      '[AmazonConnectPhone] disconnect_the_call completed'
-    )
+    await runDisconnectTheCallHangup(callId, args as Record<string, unknown>)
   },
 }

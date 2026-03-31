@@ -8,6 +8,10 @@ import {
 import { deleteCall, getContactId } from '../call-store'
 import { handleMessageIfToolCall } from '../tools'
 import {
+  clearDisconnectHangupSchedule,
+  noteDisconnectResponseDone,
+} from './disconnect-hangup-scheduler'
+import {
   clearTransferHangupSchedule,
   noteTransferResponseDone,
 } from './transfer-hangup-scheduler'
@@ -56,6 +60,7 @@ export const closeOpenAiSipWebSocketForCall = (callId: string): void => {
   const contactId = getContactId(callId)
   const key = contactId || callId
   clearTransferHangupSchedule(callId)
+  clearDisconnectHangupSchedule(callId)
   clearConversationTimeout(key)
   const ws = wsByKey.get(key)
   if (ws) {
@@ -126,6 +131,7 @@ export const connectOpenAiSipRealtimeWebSocket = (
     )
 
     noteTransferResponseDone(callId, message)
+    noteDisconnectResponseDone(callId, message)
     await handleMessageIfToolCall(callId, message, ws)
   })
 
