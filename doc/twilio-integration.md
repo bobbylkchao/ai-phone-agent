@@ -10,44 +10,13 @@ This document describes **Twilio Media Streams** phone integration for this serv
 
 ## Architecture
 
-### High-Level Flow
+### High-level flow
 
-```
-Phone Call Flow:
-┌─────────┐
-│  User   │
-│  Phone  │
-└────┬────┘
-     │ Calls Twilio Number
-     ▼
-┌─────────┐
-│ Twilio  │
-└────┬────┘
-     │ POST /twilio-phone/incoming-call
-     ▼
-┌─────────┐
-│ Backend │ ──→ Returns TwiML with <Stream> directive
-│ Server  │
-└────┬────┘
-     │
-     │ Twilio connects to wss://.../twilio-phone/media-stream
-     ▼
-┌─────────┐
-│ WebSocket│
-│ /twilio-phone/media-stream │
-└────┬────┘
-     │
-     ▼
-┌─────────────────────────┐
-│ TwilioRealtimeTransportLayer │
-└────┬────────────────────┘
-     │
-     ▼
-┌─────────────────────────┐
-│ RealtimeSession (OpenAI)│
-│ with frontDeskAgentForPhone │
-└─────────────────────────┘
-```
+![High-level flow: Twilio IVR, HTTP POST for TwiML via /incoming-call, WebSocket to /media-stream, AI Phone Agent session with OpenAI Realtime API](./assets/high-level-design-twilio.png)
+
+1. **HTTP POST** — Twilio requests TwiML from **`/twilio-phone/incoming-call`** (see the HTTP route handler under [Components](#components)).
+2. **WebSocket** — Twilio opens a Media Stream to **`/twilio-phone/media-stream`** for bidirectional audio.
+3. **Session** — The backend runs a **Realtime** session with OpenAI (via `TwilioRealtimeTransportLayer` and `frontDeskAgentForPhone`; details below).
 
 ### Components
 

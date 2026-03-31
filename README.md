@@ -4,11 +4,25 @@
 
 This project is a **Node.js / TypeScript backend** you connect to **Twilio** or **Amazon Connect**. Callers dial a normal business number; audio flows into your server and to **OpenAI Realtime**, so the AI can listen, speak, run tools (hang up, transfer to a human, collect structured info), and optionally use **[MCP](https://modelcontextprotocol.io/)**-backed tools. It is built for teams that want a **clear, deployable baseline** for **phone-first** voice agents—not a generic demo, but patterns you can ship and replace with your own product logic.
 
+## Architecture at a glance
+
+Two call paths are supported: **Amazon Connect** (SIP → OpenAI Realtime webhook) and **Twilio** (TwiML + Media Streams). The diagrams below summarize how each path reaches this backend and OpenAI Realtime.
+
+### Amazon Connect + AI Phone Agent
+
+<p align="center">
+  <img src="./doc/assets/high-level-design-amazon-connect.png" alt="High-level flow: Amazon Connect IVR, SIP connector, OpenAI SIP and Realtime, webhook, AI Phone Agent accept and connect, transfer back to IVR" width="720" />
+</p>
+
+### Twilio + AI Phone Agent
+
+<p align="center">
+  <img src="./doc/assets/high-level-design-twilio.png" alt="High-level flow: Twilio IVR, HTTP POST for TwiML, WebSocket media stream, AI Phone Agent session with OpenAI Realtime API" width="720" />
+</p>
+
 <p align="center">
   <img src="./doc/assets/ai-phone-agent.png" alt="AI Phone Agent: caller connects via Twilio or Amazon Connect; the backend lets an AI answer and talk on the call." width="720" />
 </p>
-
-**Requires Node.js ≥ 16.**
 
 ## Try it (live)
 

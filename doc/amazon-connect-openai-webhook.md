@@ -19,6 +19,12 @@ Layout aligns with `phone-sales-ai-copilot`’s `phone-sales-ai-voice-agent` ser
 | Connect SDK (optional) | `src/foundation/amazon-connect/` |
 | OpenAI REST helper | `src/foundation/open-ai/send-http-request.ts` |
 
+## High-level flow
+
+![High-level flow: Amazon Connect IVR, SIP connector, OpenAI SIP and Realtime, webhook, AI Phone Agent accept and connect, transfer back to IVR](./assets/high-level-design-amazon-connect.png)
+
+At a glance: **Amazon Connect IVR** → **SIP connector** → **OpenAI SIP** (bridged with **OpenAI Realtime**). The **`realtime.call.incoming`** webhook hits this server; the agent **accepts** and **connects** to the call over Realtime, and can **transfer / hand off** back to Connect. Step-by-step behavior is implemented under `openai-sip-webhook/` (see the table above).
+
 ## Enable the feature
 
 In `.env`:
