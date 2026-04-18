@@ -24,7 +24,7 @@ Imports use **`@/*` → `src/*`**; build uses **`tsc-alias`** for `dist/`.
 - **Small, focused diffs** — match existing style; don’t refactor unrelated code.
 - **Lint / format** — ESLint uses **Airbnb** (`eslint-config-airbnb-base` + `@kesills/eslint-config-airbnb-typescript`) with **Prettier** (`eslint-config-prettier`). Run `npm run lint` and `npm run format` before you finish.
 - **Tools** — New Realtime tools: Zod schema + matching `parametersJsonSchema`, register in `openai-sip-webhook/tools/index.ts` (same pattern as existing tools).
-- **Voice prompts** — Connect SIP: `openai-sip-webhook/agents/` (e.g. `sip-instructions.ts`, `entry-agent.ts`). Twilio: `foundation/open-ai/agents/realtime-phone/`.
+- **Voice prompts** — Connect SIP: `openai-sip-webhook/agents/` (e.g. `sip-instructions.ts`, `entry-agent.ts`). Twilio: `service/twilio-phone/agents/realtime-phone/`.
 
 ## Security
 

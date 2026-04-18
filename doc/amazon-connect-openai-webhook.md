@@ -87,7 +87,7 @@ If `AMAZON_CONNECT_SDK_ENABLE` is not `true` or the client fails to init, the to
 
 ## Customizing behavior
 
-- **Instructions**: Edit `openai-sip-webhook/agents/entry-agent.ts` or replace `getPhoneAgentInstructions`. The default is `agents/sip-instructions.ts` only (name-first intake, trip requirements, then handoff)—it does **not** use the Twilio `foundation/.../front-desk-agent` prompts, so the model does not assume a web browsing session.
+- **Instructions**: Edit `openai-sip-webhook/agents/entry-agent.ts` or replace `getPhoneAgentInstructions`. The default is `agents/sip-instructions.ts` only (name-first intake, trip requirements, then handoff)—it does **not** use the Twilio `service/twilio-phone/agents/.../front-desk-agent` prompts, so the model does not assume a web browsing session.
 
 ### Why the assistant used to mention hotels or dates “from session”
 

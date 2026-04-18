@@ -93,7 +93,7 @@ The OpenAI Realtime Agent is the foundation of our voice interaction system. Eac
 - **Tools**: Other agents that can be invoked as tools
 - **MCP Servers**: External tool providers via Model Context Protocol
 
-**Implementation Location**: `src/foundation/open-ai/agents/`
+**Implementation Location**: `src/service/twilio-phone/agents/`
 
 **Key Configuration**:
 - Model: `gpt-realtime-1.5` (default via `OPENAI_MODEL` in `.env`; override as needed)
@@ -176,7 +176,7 @@ Each agent can:
 
 #### 1. Front Desk Agent (phone)
 
-**Location**: `src/foundation/open-ai/agents/realtime-phone/front-desk-agent/index.ts` (Twilio path; Connect SIP uses dedicated prompts under `openai-sip-webhook/agents/`)
+**Location**: `src/service/twilio-phone/agents/realtime-phone/front-desk-agent/index.ts` (Twilio path; Connect SIP uses dedicated prompts under `openai-sip-webhook/agents/`)
 
 **Responsibilities**:
 - Primary point of contact for users
@@ -197,7 +197,7 @@ Each agent can:
 
 #### 2. Hotel Booking Agent
 
-**Location**: `src/foundation/open-ai/agents/general-agents/hotel-booking-agent/index.ts`
+**Location**: `src/service/twilio-phone/agents/general-agents/hotel-booking-agent/index.ts`
 
 **Responsibilities**:
 - Specialized hotel booking assistance
@@ -208,7 +208,7 @@ Each agent can:
 
 #### 3. Flight Booking Agent
 
-**Location**: `src/foundation/open-ai/agents/general-agents/flight-booking-agent/index.ts`
+**Location**: `src/service/twilio-phone/agents/general-agents/flight-booking-agent/index.ts`
 
 **Responsibilities**:
 - Specialized flight booking assistance
@@ -219,7 +219,7 @@ Each agent can:
 
 #### 4. Car Rental Booking Agent
 
-**Location**: `src/foundation/open-ai/agents/general-agents/car-rental-booking-agent/index.ts`
+**Location**: `src/service/twilio-phone/agents/general-agents/car-rental-booking-agent/index.ts`
 
 **Responsibilities**:
 - Specialized car rental booking assistance
@@ -230,7 +230,7 @@ Each agent can:
 
 #### 5. Post Booking Agent
 
-**Location**: `src/foundation/open-ai/agents/general-agents/post-booking-agent/index.ts`
+**Location**: `src/service/twilio-phone/agents/general-agents/post-booking-agent/index.ts`
 
 **Responsibilities**:
 - Help with existing bookings

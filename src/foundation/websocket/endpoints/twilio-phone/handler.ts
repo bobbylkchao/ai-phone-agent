@@ -3,7 +3,7 @@ import { RealtimeSession } from '@openai/agents-realtime'
 import { TwilioRealtimeTransportLayer } from '@openai/agents-extensions'
 import { MCPServerStreamableHttp, withTrace } from '@openai/agents'
 import { mcpServerList } from '@/foundation/mcp-server'
-import { frontDeskAgentForPhone } from '@/foundation/open-ai/agents/realtime-phone/front-desk-agent'
+import { frontDeskAgentForPhone } from '@/service/twilio-phone/agents/realtime-phone/front-desk-agent'
 import logger from '@/misc/logger'
 
 const greetingRecord = new Map<string, boolean>()

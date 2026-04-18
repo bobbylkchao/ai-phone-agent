@@ -16,7 +16,8 @@ alwaysApply: true
 - Prefer **small, task-focused changes**; match existing patterns and naming.
 - Imports: **`@/*` maps to `src/*`**. After `npm run build`, `tsc-alias` rewrites paths in `dist/`.
 - **New tools** (Connect Realtime): add Zod + `parametersJsonSchema`, export tool, register in `openai-sip-webhook/tools/index.ts`.
-- **SIP voice prompts:** `openai-sip-webhook/agents/` (not the Twilio front-desk prompts unless editing Twilio flow).
+- **SIP voice prompts:** `openai-sip-webhook/agents/` (Connect; not the Twilio stack).
+- **Twilio Realtime agent + tools:** `service/twilio-phone/agents/` (front-desk + `general-agents`).
 
 # Security
 

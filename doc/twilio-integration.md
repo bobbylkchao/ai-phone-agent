@@ -86,7 +86,7 @@ app.all('/twilio-phone/incoming-call', (req, res) => {
 
 #### 4. Phone Session Agent
 
-**Location**: `src/foundation/open-ai/agents/general-agents/phone-session-agent/`
+**Location**: `src/service/twilio-phone/agents/general-agents/phone-session-agent/`
 
 **Purpose**: Retrieves customer phone session data based on phone number
 
@@ -104,7 +104,7 @@ app.all('/twilio-phone/incoming-call', (req, res) => {
 
 #### 5. Front Desk Agent for Phone
 
-**Location**: `src/foundation/open-ai/agents/realtime-phone/front-desk-agent/`
+**Location**: `src/service/twilio-phone/agents/realtime-phone/front-desk-agent/`
 
 **Purpose**: Specialized AI agent optimized for phone-based customer service
 

@@ -1,6 +1,6 @@
 import type { AmazonConnectOpenAiVoiceAgentMetaData } from '../types'
 
-/** Shared with Twilio foundation prompts (`conversation.ts` / `conversation-example.ts`). */
+/** Shared with Twilio prompts (`service/twilio-phone/agents/.../conversation*.ts`). */
 export const DEFAULT_BRAND = 'Example Trips'
 
 /**
