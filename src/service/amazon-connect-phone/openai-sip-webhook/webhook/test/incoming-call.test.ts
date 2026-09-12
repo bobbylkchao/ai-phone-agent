@@ -1,19 +1,23 @@
 import express from 'express'
 import request from 'supertest'
 import { acceptOpenAiSipCall } from '../../handle-call/accept-call'
-import { handleOpenAiSipIncomingCallWebhook } from '../incoming-call'
+import type { VoiceAgentDefinition } from '../../types'
+import { createOpenAiSipIncomingCallWebhook } from '../incoming-call'
 
 jest.mock('../../handle-call/accept-call', () => ({
   acceptOpenAiSipCall: jest.fn(),
 }))
 
 const acceptCallMock = jest.mocked(acceptOpenAiSipCall)
+const agent: VoiceAgentDefinition = {
+  getInstructions: () => 'Test instructions',
+}
 
 describe('handleOpenAiSipIncomingCallWebhook', () => {
   const createApp = () => {
     const app = express()
     app.use(express.json())
-    app.all('/incoming-call', handleOpenAiSipIncomingCallWebhook)
+    app.all('/incoming-call', createOpenAiSipIncomingCallWebhook(agent))
     return app
   }
 
@@ -25,7 +29,6 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
     data: {
       call_id: 'call/1',
       sip_headers: [
-        { name: 'X-Amzn-SourceArn', value: 'source-arn' },
         ...(userToUser ? [{ name: 'User-to-User', value: userToUser }] : []),
       ],
     },
@@ -36,8 +39,11 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
     const uui = Buffer.from(
       JSON.stringify({
         contactId: 'contact-1',
+        initialContactId: 'initial-1',
         queueName: 'Sales',
+        initiationMethod: 'INBOUND',
         customerPhoneNumber: '+15550000000',
+        systemPhoneNumber: '+15551111111',
       })
     ).toString('hex')
 
@@ -49,12 +55,15 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
     expect(response.body).toEqual({ accepted: true, call_id: 'call/1' })
     expect(acceptCallMock).toHaveBeenCalledWith({
       callId: 'call/1',
-      metaData: expect.objectContaining({
-        amazonConnectSourceArn: 'source-arn',
+      agent,
+      metaData: {
         contactId: 'contact-1',
+        initialContactId: 'initial-1',
         queueName: 'Sales',
+        initiationMethod: 'INBOUND',
         customerPhoneNumber: '+15550000000',
-      }),
+        systemPhoneNumber: '+15551111111',
+      },
     })
   })
 
@@ -86,6 +95,7 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
     })
     expect(acceptCallMock).toHaveBeenCalledWith({
       callId: 'call/1',
+      agent,
       metaData: expect.objectContaining({ contactId: undefined }),
     })
   })
@@ -110,8 +120,8 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
 
     expect(acceptCallMock).toHaveBeenCalledWith({
       callId: 'call/1',
+      agent,
       metaData: expect.objectContaining({
-        amazonConnectSourceArn: undefined,
         contactId: undefined,
       }),
     })

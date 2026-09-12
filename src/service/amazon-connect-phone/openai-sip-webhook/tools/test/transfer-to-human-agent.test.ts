@@ -1,11 +1,5 @@
 import { updateContactAttributes } from '@/foundation/amazon-connect/update-attributes'
-import {
-  deleteCall,
-  getContactId,
-  getTripIntake,
-  mergeTripIntake,
-  setContactId,
-} from '../../call-store'
+import { deleteCall, getContactId, setContactId } from '../../call-store'
 import { hangUpOpenAiSipCall } from '../../handle-call/hang-up-call'
 import { closeOpenAiSipWebSocketForCall } from '../../websocket/connect-to-call'
 import {
@@ -38,28 +32,19 @@ describe('transfer_to_human_agent tool', () => {
   it('writes handoff attributes before cleaning up the call', async () => {
     process.env.AMAZON_CONNECT_SDK_ENABLE = 'true'
     setContactId('call-1', 'contact-1')
-    mergeTripIntake('call-1', {
-      customerName: 'Ada',
-      tripRequirementsNotes: 'Tokyo',
-    })
 
     await runTransferToHumanAgentHangup(
       'call-1',
-      '{"summary":"Customer wants Tokyo"}'
+      '{"summary":"Customer requested a human agent"}'
     )
 
     expect(updateContactAttributes).toHaveBeenCalledWith('contact-1', {
       AIVoiceAgentHandoff: 'true',
-      AIVoiceAgentConversationSummary: 'Customer wants Tokyo',
-      AIVoiceAgentHandoffPayload: JSON.stringify({
-        customerName: 'Ada',
-        tripRequirementsNotes: 'Tokyo',
-      }),
+      AIVoiceAgentConversationSummary: 'Customer requested a human agent',
     })
     expect(closeOpenAiSipWebSocketForCall).toHaveBeenCalledWith('call-1')
     expect(hangUpOpenAiSipCall).toHaveBeenCalledWith('call-1', 'contact-1')
     expect(getContactId('call-1')).toBeUndefined()
-    expect(getTripIntake('call-1')).toBeUndefined()
   })
 
   it('defaults the summary when the model omitted it', async () => {
@@ -74,7 +59,7 @@ describe('transfer_to_human_agent tool', () => {
     )
   })
 
-  it('only logs the payload when the Connect SDK is disabled', async () => {
+  it('skips attributes when the Connect SDK is disabled', async () => {
     process.env.AMAZON_CONNECT_SDK_ENABLE = 'false'
     setContactId('call-1', 'contact-1')
 

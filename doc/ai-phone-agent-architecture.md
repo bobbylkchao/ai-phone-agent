@@ -1,135 +1,140 @@
 # AI Phone Agent Architecture
 
-## Overview
+## Purpose
 
-This service provides real-time AI phone conversations through Amazon Connect and OpenAI Realtime SIP. It is intentionally phone-only and keeps the telephony integration separate from reusable infrastructure and example business tools.
+This repository is a generic control-plane foundation for AI phone calls over
+Amazon Connect and OpenAI Realtime SIP. Telephony lifecycle code does not own a
+brand, conversation domain, intake schema, or product integration.
+
+A runnable hotel-booking example demonstrates where application behavior
+belongs without making that behavior part of the foundation.
+
+## Composition
+
+```text
+src/index.ts
+  ├─ selects hotelBookingAgent (replaceable example)
+  ├─ initializes Amazon Connect / OpenAI SIP channel
+  ├─ mounts optional MCP server definitions
+  └─ registers operational status routes
+```
+
+`VoiceAgentDefinition` is the boundary between reusable call infrastructure and
+application behavior:
+
+- `getInstructions(metaData)` returns the active phone prompt.
+- `tools` optionally adds application-owned Realtime function tools.
+
+The SIP core always adds the generic `transfer_to_human_agent` and
+`disconnect_the_call` tools.
 
 ## Call path
 
 ```text
 Caller
-  │
-  ▼
-Amazon Connect contact flow
-  │ SIP
-  ▼
-OpenAI Realtime SIP
-  │ realtime.call.incoming webhook
-  ▼
-Express POST /amazon-connect-phone/incoming-call
-  │
-  ├─ POST /v1/realtime/calls/{call_id}/accept
-  └─ WSS /v1/realtime?call_id={call_id}
-       │
-       ├─ session events
-       ├─ function calls
-       └─ response completion events
+  → Amazon Connect contact flow
+  → OpenAI Realtime SIP
+  → POST /amazon-connect-phone/incoming-call
+  → accept call with injected instructions and tools
+  → WSS /v1/realtime?call_id={call_id}
+  → function calls and response completion events
+  → transfer to Connect or disconnect
 ```
 
-Amazon Connect and OpenAI carry the audio. This Node.js service controls the call but does not proxy its audio.
+Amazon Connect and OpenAI carry the audio. This service receives the webhook,
+configures the session, handles server-side tools, and controls the call leg.
 
 ## Layers
 
-### Channel
+### Generic phone foundation
 
-`src/service/amazon-connect-phone/` initializes the OpenAI SIP webhook and the optional Amazon Connect SDK client.
+`src/service/amazon-connect-phone/openai-sip-webhook/` owns:
 
-`openai-sip-webhook/` owns:
+- incoming webhook validation and supported UUI metadata parsing;
+- Realtime call acceptance and hangup requests;
+- per-call contact ID state;
+- the Realtime sideband WebSocket;
+- core transfer/disconnect tools;
+- delayed hangup after final spoken audio;
+- injection of the active `VoiceAgentDefinition`.
 
-- webhook validation and SIP metadata parsing
-- call acceptance and hangup requests
-- per-call state
-- the OpenAI Realtime WebSocket
-- voice instructions
-- function-tool schemas and execution
-- delayed transfer/disconnect scheduling
+The supported example UUI shape is intentionally limited to generic Connect
+call metadata: `contactId`, `initialContactId`, `queueName`,
+`initiationMethod`, `customerPhoneNumber`, and `systemPhoneNumber`.
 
-### Foundation
+### Generic foundations
 
-- `foundation/open-ai/` sends authenticated OpenAI REST requests.
-- `foundation/amazon-connect/` initializes the AWS SDK and updates contact attributes.
-- `foundation/mcp-server/` hosts illustrative booking and post-booking MCP tools.
+- `src/foundation/open-ai/` sends authenticated OpenAI REST requests.
+- `src/foundation/amazon-connect/` initializes the optional AWS SDK client and
+  updates contact attributes.
+- `src/foundation/mcp-server/` hosts supplied MCP definitions over Streamable
+  HTTP without knowing their business tools.
 
-### Operations
+### Replaceable example
 
-- `misc/logger.ts` provides structured Pino logs.
-- `misc/status-routes.ts` exposes `/status` and `/status.json`.
-- `src/index.ts` initializes Express, the Amazon Connect channel, and MCP servers.
+`src/example/hotel-booking/` contains:
 
-## Call lifecycle
+- a minimal prompt that asks which city the caller plans to visit;
+- a `search-hotel` MCP stub returning placeholder data;
+- no production brand, provider, persistence, checkout, or cancellation logic.
 
-1. OpenAI sends `realtime.call.incoming`.
-2. The webhook extracts the call ID and decodes supported Amazon Connect SIP headers.
-3. The service stores per-call metadata and accepts the call with instructions and tool definitions.
-4. A WebSocket is opened to the accepted Realtime call.
-5. The service sends session configuration and the initial response request.
-6. Realtime function calls are validated with Zod and dispatched to registered tools.
-7. Transfer or disconnect waits for `response.done` plus an audio-tail delay before updating Connect attributes and hanging up.
-8. WebSocket close clears call state and timers.
+The MCP endpoint is independently runnable but is not attached to the phone
+session. A production application can deploy an MCP server publicly and add it
+to Realtime as a Remote MCP tool, or inject a function tool that calls a private
+backend.
 
-## State and concurrency
+## Tool lifecycle
 
-Maps keyed by `callId` or `contactId` isolate concurrent calls:
+Application tools and core tools use the same `VoiceAgentTool` contract:
 
-- call metadata and contact ID
-- trip-intake state
-- active OpenAI WebSocket
-- conversation timeout
-- transfer and disconnect schedules
+- Zod validates runtime arguments;
+- `parametersJsonSchema` is sent in the Realtime accept payload;
+- `execute` runs server-side application logic.
 
-This is process-local state. Horizontal scaling therefore requires sticky routing or moving call state and coordination into a shared store.
+Normal tools return a `function_call_output` event and request another model
+response. Transfer and disconnect are special because the caller should hear
+the final sentence before the OpenAI leg ends:
 
-## Voice-agent behavior
+1. The model speaks and emits the tool call.
+2. The service stores tool arguments.
+3. The corresponding `response.done` event arrives.
+4. An environment-configurable audio-tail delay expires.
+5. Contact attributes are optionally updated and the OpenAI call is hung up.
 
-The Connect-specific prompt lives in `openai-sip-webhook/agents/`. It treats Amazon Connect metadata as routing context, collects information explicitly from the caller, and does not invent itinerary details.
+Transfer remains a generic fallback so callers can always ask for a human when
+the model cannot provide a satisfactory result.
 
-Realtime tools use two matching contracts:
+## State and scaling
 
-- a Zod schema for runtime validation
-- `parametersJsonSchema` sent to OpenAI
+Process-local maps hold:
 
-New tools must be exported and registered in `openai-sip-webhook/tools/index.ts`.
+- contact ID by call ID;
+- active Realtime WebSocket;
+- conversation timeout;
+- transfer and disconnect schedules.
 
-## Human handoff
+Horizontal scaling requires sticky routing or shared state and distributed
+timer coordination.
 
-When enabled, the Amazon Connect SDK writes contact attributes before the OpenAI call leg ends:
+## Security boundary
 
-- handoff flag
-- concise conversation summary
-- structured intake payload
+- Do not put secrets or unnecessary PII in logs.
+- Treat UUI metadata as routing context, not trusted business input.
+- Keep tool authorization and product compliance inside the injected
+  application layer.
+- Add webhook authenticity verification before production exposure.
+- Narrow Remote MCP tools with `allowed_tools` and use approvals for
+  side-effecting operations.
 
-Transfer and disconnect are scheduled after the model's final response completes so TTS playback is not cut off.
+## Extension path
 
-## MCP examples
+To build another voice application:
 
-The MCP servers demonstrate modular tool backends. Booking and post-booking behavior is illustrative and should be replaced with product-specific authorization, persistence, compliance, and error handling.
+1. Add a module under `src/example/` or your product namespace.
+2. Export a `VoiceAgentDefinition`.
+3. Add only the application tools that scenario needs.
+4. Inject the definition from `src/index.ts`.
+5. Replace or remove the hotel MCP definition.
 
-## Error handling
-
-- Missing required configuration prevents the affected channel from registering or accepting calls.
-- OpenAI REST and WebSocket failures are logged with call context.
-- Tool inputs are validated before execution.
-- WebSocket shutdown clears timers and call state.
-- Secrets must never be logged; production logging should minimize caller metadata and transcript content.
-
-## Scaling considerations
-
-Before horizontal production deployment, add:
-
-- shared call state and distributed timer coordination
-- webhook authentication/signature verification
-- rate limiting and request-size limits
-- metrics for accept latency, call duration, tool failures, and handoff outcome
-- log redaction and retention controls
-- graceful shutdown for active calls
-
-## Runtime
-
-- Node.js 20.19 or newer
-- TypeScript
-- Express
-- `ws`
-- OpenAI Realtime REST/WebSocket protocol
-- AWS SDK for Amazon Connect
-- Zod
-- Pino
+No changes to webhook parsing, SIP acceptance, WebSocket lifecycle, or hangup
+scheduling should be necessary.

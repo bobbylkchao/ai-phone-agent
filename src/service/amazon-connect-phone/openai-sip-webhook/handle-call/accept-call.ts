@@ -3,12 +3,14 @@ import { getErrorMessage } from '@/misc/get-error-message'
 import { sendHttpRequestToOpenAi } from '@/foundation/open-ai/send-http-request'
 import { getPhoneAgentInstructions } from '../agents/entry-agent'
 import type { AmazonConnectOpenAiVoiceAgentMetaData } from '../types'
+import type { VoiceAgentDefinition } from '../types'
 import { setContactId } from '../call-store'
 import { getRealtimeToolsConfig } from '../tools'
 import { connectOpenAiSipRealtimeWebSocket } from '../websocket/connect-to-call'
 
 export interface AcceptOpenAiSipCallParams {
   callId: string
+  agent: VoiceAgentDefinition
   metaData?: AmazonConnectOpenAiVoiceAgentMetaData
 }
 
@@ -17,6 +19,7 @@ export interface AcceptOpenAiSipCallParams {
  */
 export const acceptOpenAiSipCall = async ({
   callId,
+  agent,
   metaData = {},
 }: AcceptOpenAiSipCallParams): Promise<{ ok: boolean; error?: string }> => {
   const apiKey = process.env.OPENAI_API_KEY
@@ -25,7 +28,7 @@ export const acceptOpenAiSipCall = async ({
     return { ok: false, error: 'OPENAI_API_KEY is missing' }
   }
 
-  const instructions = getPhoneAgentInstructions(metaData)
+  const instructions = getPhoneAgentInstructions(agent, metaData)
   const model = process.env.OPENAI_MODEL || 'gpt-realtime-2.1'
 
   const url = `https://api.openai.com/v1/realtime/calls/${encodeURIComponent(callId)}/accept`
@@ -33,7 +36,7 @@ export const acceptOpenAiSipCall = async ({
     type: 'realtime',
     model,
     instructions,
-    tools: getRealtimeToolsConfig(),
+    tools: getRealtimeToolsConfig(agent.tools),
   }
 
   try {
@@ -59,7 +62,11 @@ export const acceptOpenAiSipCall = async ({
       setContactId(callId, metaData.contactId)
     }
 
-    connectOpenAiSipRealtimeWebSocket(callId, metaData.contactId ?? '')
+    connectOpenAiSipRealtimeWebSocket(
+      callId,
+      metaData.contactId ?? '',
+      agent.tools
+    )
 
     return { ok: true }
   } catch (error) {

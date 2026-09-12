@@ -1,25 +1,51 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import type { Express } from 'express'
-import { initBookingMcpServer } from './booking-mcp-server'
-import { initPostBookingMcpServer } from './post-booking-mcp-server'
+import logger from '@/misc/logger'
 
-export const initMcpServers = (app: Express, port: number): void => {
-  initBookingMcpServer(app, port)
-  initPostBookingMcpServer(app, port)
+export interface HttpMcpServerDefinition {
+  name: string
+  path: `/${string}`
+  registerTools: (server: McpServer) => void
 }
 
-export const mcpServerList: {
-  name: string
-  url: string
-  phoneCallOnly: boolean
-}[] = [
-  {
-    name: 'booking-mcp-server',
-    url: 'http://localhost:4000/booking-mcp',
-    phoneCallOnly: false,
-  },
-  {
-    name: 'post-booking-mcp-server',
-    url: 'http://localhost:4000/post-booking-mcp',
-    phoneCallOnly: false,
-  },
-]
+export const initMcpServers = (
+  app: Express,
+  definitions: HttpMcpServerDefinition[]
+): void => {
+  for (const definition of definitions) {
+    try {
+      app.post(definition.path, async (req, res) => {
+        try {
+          const server = new McpServer({
+            name: definition.name,
+            version: '1.0.0',
+          })
+          definition.registerTools(server)
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+            enableJsonResponse: true,
+          })
+          res.on('close', () => {
+            void transport.close()
+          })
+          await server.connect(transport)
+          await transport.handleRequest(req, res, req.body)
+        } catch (error) {
+          logger.error(
+            { error, mcpServer: definition.name },
+            '[MCP Server] Request failed'
+          )
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Internal server error' })
+          }
+        }
+      })
+    } catch (error) {
+      logger.error(
+        { error, mcpServer: definition.name },
+        '[MCP Server] Initialization failed'
+      )
+    }
+  }
+}

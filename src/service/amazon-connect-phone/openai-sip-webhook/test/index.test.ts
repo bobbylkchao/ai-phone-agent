@@ -1,4 +1,9 @@
 import { registerOpenAiSipWebhookRoutes } from '../index'
+import type { VoiceAgentDefinition } from '../types'
+
+const agent: VoiceAgentDefinition = {
+  getInstructions: () => 'Test instructions',
+}
 
 describe('registerOpenAiSipWebhookRoutes', () => {
   const originalBasePath = process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH
@@ -15,7 +20,7 @@ describe('registerOpenAiSipWebhookRoutes', () => {
     process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH = '/connect'
     const app = { post: jest.fn() }
 
-    registerOpenAiSipWebhookRoutes(app as never)
+    registerOpenAiSipWebhookRoutes(app as never, agent)
 
     expect(app.post).toHaveBeenCalledWith(
       '/connect/incoming-call',
@@ -27,7 +32,7 @@ describe('registerOpenAiSipWebhookRoutes', () => {
     delete process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH
     const app = { post: jest.fn() }
 
-    registerOpenAiSipWebhookRoutes(app as never)
+    registerOpenAiSipWebhookRoutes(app as never, agent)
 
     expect(app.post).not.toHaveBeenCalled()
   })

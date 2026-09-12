@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express'
-import { mcpServerList } from '@/foundation/mcp-server'
 
 export interface StatusServiceRow {
   id: string
@@ -7,6 +6,11 @@ export interface StatusServiceRow {
   ready: boolean
   detail?: string
   endpoints: { label: string; url: string }[]
+}
+
+export interface StatusMcpServer {
+  name: string
+  path: `/${string}`
 }
 
 const escapeHtml = (s: string): string =>
@@ -22,7 +26,11 @@ const publicBase = (req: Request, port: number): string => {
   return `${proto}://${host}`
 }
 
-export const buildStatusPayload = (req: Request, port: number) => {
+export const buildStatusPayload = (
+  req: Request,
+  port: number,
+  mcpServers: StatusMcpServer[] = []
+) => {
   const base = publicBase(req, port)
 
   const connectWebhookBase = process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH
@@ -68,15 +76,11 @@ export const buildStatusPayload = (req: Request, port: number) => {
     },
   ]
 
-  const mcp = mcpServerList.map((m) => {
-    const path = new URL(m.url).pathname
-    return {
-      name: m.name,
-      phoneCallOnly: m.phoneCallOnly,
-      url: `${base}${path}`,
-      ready: true,
-    }
-  })
+  const mcp = mcpServers.map((server) => ({
+    name: server.name,
+    url: `${base}${server.path}`,
+    ready: true,
+  }))
 
   return {
     generatedAt: new Date().toISOString(),
@@ -170,17 +174,21 @@ const renderStatusHtml = (
 </html>`
 }
 
-export const registerStatusRoutes = (app: Express, port: number): void => {
+export const registerStatusRoutes = (
+  app: Express,
+  port: number,
+  mcpServers: StatusMcpServer[] = []
+): void => {
   app.get('/health', (_req: Request, res: Response) => {
     res.sendStatus(200)
   })
 
   app.get('/status.json', (req: Request, res: Response) => {
-    res.json(buildStatusPayload(req, port))
+    res.json(buildStatusPayload(req, port, mcpServers))
   })
 
   app.get('/status', (req: Request, res: Response) => {
-    const payload = buildStatusPayload(req, port)
+    const payload = buildStatusPayload(req, port, mcpServers)
     res.type('html').send(renderStatusHtml(payload))
   })
 }

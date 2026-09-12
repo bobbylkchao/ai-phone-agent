@@ -1,55 +1,76 @@
 # AI Phone Agent for Amazon Connect
 
-A production-oriented Node.js and TypeScript backend for real-time AI phone calls through **Amazon Connect**, **OpenAI SIP**, and the **OpenAI Realtime API**.
+A ready-to-run Node.js and TypeScript kit for real AI phone calls on **Amazon
+Connect**, **OpenAI SIP**, and the **OpenAI Realtime API**. Clone it, point your
+Connect SIP trunk at it, and go straight to writing business logic — you don't
+have to build the telephony plumbing from scratch.
 
-Callers enter through Amazon Connect and are routed to OpenAI over SIP. OpenAI sends this service a `realtime.call.incoming` webhook; the service accepts the call, opens a Realtime WebSocket for session events and function calls, and can update Amazon Connect contact attributes before transferring or disconnecting.
+**Already wired for you:** the `realtime.call.incoming` webhook, call accept
+with instructions and tools, the Realtime WebSocket sideband, function-tool
+dispatch and validation, transfer-to-human and hangup timing that doesn't cut
+off speech, optional Amazon Connect contact attributes, MCP hosting, and health
+and status endpoints.
+
+**What you write:** a `VoiceAgentDefinition` — your prompt plus any tools your
+scenario needs. Inject it in `src/index.ts` and the whole call lifecycle stays
+untouched. A small hotel-booking example ships with the repo so it runs as-is;
+replace or delete it.
 
 ## Architecture
 
 ```text
-Caller
-  → Amazon Connect contact flow
-  → OpenAI SIP / Realtime
-  → POST /amazon-connect-phone/incoming-call
-  → accept call + Realtime WebSocket
-  → voice instructions and tools
-  → transfer to an agent or disconnect
+Application composition
+  ├─ voice-agent definition (instructions + optional tools)
+  ├─ Amazon Connect / OpenAI SIP foundation
+  └─ optional MCP servers
+
+Caller → Amazon Connect → OpenAI SIP / Realtime
+  → incoming-call webhook → accept → Realtime WebSocket
+  → injected instructions and tools → transfer or disconnect
 ```
 
-The audio plane stays between Amazon Connect and OpenAI. This backend is the control plane: it owns webhook handling, call state, prompts, tool execution, handoff timing, and optional Amazon Connect SDK calls.
+Amazon Connect and OpenAI carry the audio. This backend is the control plane; it
+does not proxy audio.
 
-## Design principles
+## Included example
 
-- **Phone-first**: no browser microphone or web voice client.
-- **Channel-focused**: Amazon Connect is the only telephony integration.
-- **Explicit call lifecycle**: webhook → accept → WebSocket → tools → hangup.
-- **Per-call isolation**: call metadata, intake state, timers, and WebSockets are keyed per call/contact.
-- **Safe handoff**: transfer and disconnect wait for the final spoken response before ending the OpenAI call leg.
-- **Replaceable product logic**: the included trip-intake and MCP examples demonstrate integration patterns, not production business rules.
-- **Minimal sensitive data**: do not log secrets or unnecessary PII.
+`src/example/hotel-booking/` contains a deliberately small hotel-booking
+example:
 
-## Main features
+- a phone prompt that greets the caller and asks which city they plan to visit;
+- the generic transfer-to-human fallback;
+- a standalone `search-hotel` MCP stub at `POST /hotel-booking-mcp`.
+
+The MCP endpoint returns placeholder data and is **not connected to the phone
+agent** in this example. This keeps the boundary explicit. To make it callable
+from a Realtime session, deploy an MCP server at a public HTTPS URL and add it
+as a Realtime Remote MCP tool, or implement an application-owned function-tool
+adapter. Replace the stub with a real provider such as Expedia in your product.
+
+## Generic foundation
 
 - OpenAI `realtime.call.incoming` webhook handling
-- Realtime session configuration and server-side function tools
-- Structured trip-intake state
-- Transfer-to-human and disconnect tools
-- Optional Amazon Connect `UpdateContactAttributes`
-- Optional MCP example servers
-- `/health` liveness probe, plus `/status` and `/status.json` operational endpoints
+- Realtime call acceptance and sideband WebSocket control
+- injectable instructions and application tools
+- generic `transfer_to_human_agent` and `disconnect_the_call` tools
+- delayed hangup so final speech is not cut off
+- optional Amazon Connect `UpdateContactAttributes`
+- reusable Streamable HTTP MCP host
+- `/health`, `/status`, and `/status.json`
 
 ## Repository layout
 
-- `src/service/amazon-connect-phone/` — channel bootstrap and OpenAI SIP call lifecycle
-- `src/service/amazon-connect-phone/openai-sip-webhook/agents/` — voice prompts
-- `src/service/amazon-connect-phone/openai-sip-webhook/tools/` — Realtime function tools
-- `src/service/amazon-connect-phone/openai-sip-webhook/websocket/` — per-call WebSocket and hangup scheduling
+- `src/service/amazon-connect-phone/` — generic Connect/SIP call lifecycle
 - `src/foundation/amazon-connect/` — optional AWS SDK helpers
-- `src/foundation/open-ai/` — OpenAI HTTP helper
-- `src/foundation/mcp-server/` — illustrative MCP servers
-- `src/misc/` — logging and status routes
+- `src/foundation/open-ai/` — OpenAI REST helper
+- `src/foundation/mcp-server/` — generic Streamable HTTP MCP host
+- `src/example/hotel-booking/` — replaceable example prompt and MCP stub
+- `src/misc/` — logging and operational status routes
+- `src/**/test/` — colocated Jest tests
 
-TypeScript imports use `@/*` → `src/*`; `tsc-alias` rewrites them in `dist/`.
+The application composition root is `src/index.ts`. To use another business
+scenario, create a new `VoiceAgentDefinition` and inject it there instead of
+`hotelBookingAgent`.
 
 ## Quick start
 
@@ -73,7 +94,9 @@ Configure OpenAI to send incoming Realtime SIP call webhooks to:
 https://<your-host>/amazon-connect-phone/incoming-call
 ```
 
-For contact-attribute updates, also configure `AMAZON_CONNECT_SDK_ENABLE`, `AMAZON_CONNECT_INSTANCE_ID`, `AWS_REGION`, and AWS credentials through your deployment secret manager.
+For optional contact-attribute updates, configure
+`AMAZON_CONNECT_SDK_ENABLE`, `AMAZON_CONNECT_INSTANCE_ID`, `AWS_REGION`, and
+AWS credentials through your deployment secret manager.
 
 ## Commands
 
@@ -87,16 +110,6 @@ npm run format
 npm test
 npm run test:coverage
 ```
-
-## Coding agents
-
-- `AGENTS.md` is the shared project guidance for coding agents.
-- `CLAUDE.md` imports `AGENTS.md` using Claude Code's supported `@` syntax.
-- `.cursor/rules/` and `.claude/rules/` contain tool-specific, path-scoped rules.
-- `.claude/skills/verify-phone-agent/` provides one Agent Skills-compatible
-  verification workflow that both Claude Code and Cursor can discover.
-- `.claude/settings.json` contains shared Claude Code safety permissions; use the
-  gitignored `.claude/settings.local.json` for personal overrides.
 
 ## Documentation
 

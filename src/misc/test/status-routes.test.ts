@@ -11,7 +11,9 @@ describe('status routes', () => {
 
   const createApp = () => {
     const app = express()
-    registerStatusRoutes(app, 4000)
+    registerStatusRoutes(app, 4000, [
+      { name: 'hotel-booking-example', path: '/hotel-booking-mcp' },
+    ])
     return app
   }
 
@@ -36,6 +38,13 @@ describe('status routes', () => {
     expect(jsonResponse.body.services[1].endpoints[0].url).toBe(
       'http://phone.example/connect/incoming-call'
     )
+    expect(jsonResponse.body.mcpServers).toEqual([
+      {
+        name: 'hotel-booking-example',
+        url: 'http://phone.example/hotel-booking-mcp',
+        ready: true,
+      },
+    ])
 
     const htmlResponse = await request(app)
       .get('/status')
