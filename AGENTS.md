@@ -1,30 +1,34 @@
 # Agent instructions (developers)
 
-**`AGENTS.md` and `CLAUDE.md` are intentionally the same.** Edit both when you change this document so Cursor and Claude Code stay aligned.
+This is the shared source of project guidance for coding agents. Claude Code
+loads it through the import in `CLAUDE.md`.
 
 ## What this repo is
 
 - **Node.js + TypeScript** backend for **real phone calls** → **OpenAI Realtime** (voice).
-- Two integrations: **Twilio** (`src/service/twilio-phone/`) and **Amazon Connect + OpenAI SIP** (`src/service/amazon-connect-phone/openai-sip-webhook/`).
+- One telephony integration: **Amazon Connect + OpenAI SIP** (`src/service/amazon-connect-phone/openai-sip-webhook/`).
 - **Phone-only** — no browser voice UI in this kit.
 
 ## Layout
 
 | Area | Role |
 |------|------|
-| `src/foundation/` | Shared OpenAI helpers, Twilio WebSocket, MCP servers, Amazon Connect SDK helpers. |
-| `src/service/twilio-phone/` | Twilio HTTP + wiring into foundation. |
+| `src/foundation/` | OpenAI helpers, MCP servers, and Amazon Connect SDK helpers. |
 | `src/service/amazon-connect-phone/` | Connect: incoming webhook, accept/hangup, Realtime WS, tools, SIP instructions. |
 | `doc/` | Architecture and integration guides — **read before large changes.** |
+| `src/**/test/` | Jest suites, one file per source file (`src/misc/test/logger.test.ts` covers `src/misc/logger.ts`). |
 
 Imports use **`@/*` → `src/*`**; build uses **`tsc-alias`** for `dist/`.
+`tsconfig.build.json` keeps `src/**/test/**` out of `dist/`.
 
 ## Conventions
 
 - **Small, focused diffs** — match existing style; don’t refactor unrelated code.
-- **Lint / format** — ESLint uses **Airbnb** (`eslint-config-airbnb-base` + `@kesills/eslint-config-airbnb-typescript`) with **Prettier** (`eslint-config-prettier`). Run `npm run lint` and `npm run format` before you finish.
+- **Lint / format** — ESLint uses the official recommended JavaScript config plus type-checked `typescript-eslint`, with Prettier disabling conflicting formatting rules. Run `npm run lint` and `npm run format` before you finish.
+- **TypeScript** — prefer arrow functions for new named helpers and callbacks unless hoisting or a dynamic `this` is required.
+- **Tests** — every executable source file has a matching test in the sibling `test/` directory; add or update it in the same change.
 - **Tools** — New Realtime tools: Zod schema + matching `parametersJsonSchema`, register in `openai-sip-webhook/tools/index.ts` (same pattern as existing tools).
-- **Voice prompts** — Connect SIP: `openai-sip-webhook/agents/` (e.g. `sip-instructions.ts`, `entry-agent.ts`). Twilio: `service/twilio-phone/agents/realtime-phone/`.
+- **Phone prompts** — Connect SIP: `openai-sip-webhook/agents/` (e.g. `sip-instructions.ts`, `entry-agent.ts`).
 
 ## Security
 
@@ -36,18 +40,21 @@ Imports use **`@/*` → `src/*`**; build uses **`tsc-alias`** for `dist/`.
 ```sh
 npm install
 npm run dev      # nodemon
-npm run build && npm run start
+npm run start    # clean build, then run dist/index.js
+npm run build
 npm run lint
+npm run lint:ci
 npm run format
+npm test
+npm run test:coverage
 ```
 
 ## Docs index
 
 - [README.md](./README.md) — overview and quick start
 - [doc/ai-phone-agent-architecture.md](./doc/ai-phone-agent-architecture.md)
-- [doc/twilio-integration.md](./doc/twilio-integration.md)
 - [doc/amazon-connect-openai-webhook.md](./doc/amazon-connect-openai-webhook.md)
-- [doc/local-testing-twilio-and-amazon-connect-sip.md](./doc/local-testing-twilio-and-amazon-connect-sip.md)
+- [doc/local-testing-amazon-connect-sip.md](./doc/local-testing-amazon-connect-sip.md)
 
 ## Demo vs product
 

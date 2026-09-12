@@ -67,14 +67,18 @@ export const handleOpenAiSipIncomingCallWebhook = async (
       : null
 
     logger.info(
-      { callId, amazonConnectSourceArn, userToUserData },
+      {
+        callId,
+        contactId: userToUserData?.contactId,
+        queueName: userToUserData?.queueName,
+      },
       '[AmazonConnectPhone] realtime.call.incoming received'
     )
 
     // Example User-to-User data from Amazon Connect
     const metaData: AmazonConnectOpenAiVoiceAgentMetaData = {
       amazonConnectSourceArn,
-      businessType: userToUserData?.businessType as string | undefined,
+      businessType: userToUserData?.businessType,
       languageCode: userToUserData?.languageCode,
       partnerName: userToUserData?.partnerName,
       contactId: userToUserData?.contactId,

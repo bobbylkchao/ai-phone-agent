@@ -27,6 +27,5 @@ dist
 # Claude Code — local overrides (optional)
 .claude/settings.local.json
 .vscode
-src/test/*
 *.sublime-project
 *.sublime-workspace

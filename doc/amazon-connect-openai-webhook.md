@@ -25,24 +25,19 @@ Layout aligns with `phone-sales-ai-copilot`’s `phone-sales-ai-voice-agent` ser
 
 At a glance: **Amazon Connect IVR** → **SIP connector** → **OpenAI SIP** (bridged with **OpenAI Realtime**). The **`realtime.call.incoming`** webhook hits this server; the agent **accepts** and **connects** to the call over Realtime, and can **transfer / hand off** back to Connect. Step-by-step behavior is implemented under `openai-sip-webhook/` (see the table above).
 
-## Enable the feature
+## Configure the webhook
+
+The Amazon Connect / OpenAI SIP webhook is always registered when `AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH` is set.
 
 In `.env`:
 
 ```env
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-realtime-1.5
-AMAZON_CONNECT_PHONE_ENABLE=true
-```
-
-`OPENAI_MODEL` matches the rest of the backend (see `.env.example`); omit it to use the code fallback (`gpt-realtime-1.5`).
-
-Optional:
-
-```env
+OPENAI_MODEL=gpt-realtime-2.1
 AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
-AMAZON_CONNECT_VOICE_AGENT_DEFAULT_PHONE=+15551234567
 ```
+
+`OPENAI_MODEL` matches the rest of the backend (see `.env.example`); omit it to use the code fallback (`gpt-realtime-2.1`).
 
 Restart the server. The webhook URL is:
 
@@ -55,7 +50,7 @@ Default `BASE_PATH` is `/amazon-connect-phone`.
 1. Configure your **Realtime SIP / phone** integration so OpenAI sends `realtime.call.incoming` to your public URL (HTTPS).
 2. Point the webhook to: `https://<your-domain>/amazon-connect-phone/incoming-call` (or your custom base path).
 
-For local development, see [Local testing: Twilio and Amazon Connect + SIP](../../doc/local-testing-twilio-and-amazon-connect-sip.md).
+For local development, see [Local testing: Amazon Connect + OpenAI SIP](./local-testing-amazon-connect-sip.md).
 
 ## Amazon Connect headers
 
@@ -87,21 +82,16 @@ If `AMAZON_CONNECT_SDK_ENABLE` is not `true` or the client fails to init, the to
 
 ## Customizing behavior
 
-- **Instructions**: Edit `openai-sip-webhook/agents/entry-agent.ts` or replace `getPhoneAgentInstructions`. The default is `agents/sip-instructions.ts` only (name-first intake, trip requirements, then handoff)—it does **not** use the Twilio `service/twilio-phone/agents/.../front-desk-agent` prompts, so the model does not assume a web browsing session.
+- **Instructions**: Edit `openai-sip-webhook/agents/entry-agent.ts` or replace `getPhoneAgentInstructions`. The default is `agents/sip-instructions.ts` (name-first intake, trip requirements, then handoff).
 
 ### Why the assistant used to mention hotels or dates “from session”
 
-Nothing in this template’s `accept` body injects hotel names or check-in/out dates from Amazon Connect unless **you** add those fields to `AmazonConnectOpenAiVoiceAgentMetaData`, map them from SIP `User-to-User` in `webhook/incoming-call.ts`, and print them into instructions. Earlier, long Twilio-oriented prompts (`getGeneralInstructions` + booking examples) could also lead the model to **infer** plausible trip details. The current SIP prompt explicitly forbids inventing itinerary details and only uses Connect metadata as routing hints (see `entry-agent.ts` “session context” section).
+Nothing in this template’s `accept` body injects hotel names or check-in/out dates from Amazon Connect unless **you** add those fields to `AmazonConnectOpenAiVoiceAgentMetaData`, map them from SIP `User-to-User` in `webhook/incoming-call.ts`, and print them into instructions. The SIP prompt explicitly forbids inventing itinerary details and only uses Connect metadata as routing hints (see `entry-agent.ts` “session context” section).
 
 - **Tools**: `update_trip_intake` (merge name + trip notes), `transfer_to_human_agent` / `disconnect_the_call` (set handoff flag, summary, and intake payload as in [Optional: UpdateContactAttributes](#optional-updatecontactattributes-on-hang-up) when `AMAZON_CONNECT_SDK_ENABLE=true`, then hang up the OpenAI call leg). Add more tools in `openai-sip-webhook/tools/` and register them in `tools/index.ts` with matching Zod + `parametersJsonSchema`.
 - **Handoff hangup timing**: If the model speaks and calls `transfer_to_human_agent` or `disconnect_the_call` in the same response, hanging up immediately can cut off playback. The server waits for `response.done` (with that tool in `output`), then delays hangup: `SIP_TRANSFER_AUDIO_TAIL_MS` for transfer, `SIP_DISCONNECT_AUDIO_TAIL_MS` for disconnect (each defaults to 3500 ms). See `websocket/transfer-hangup-scheduler.ts` and `websocket/disconnect-hangup-scheduler.ts`.
 - **Idle timeout**: `openai-sip-webhook/websocket/connect-to-call.ts` exports `onConversationTimeout` if you want to prompt or hang up after silence.
 
-## Twilio vs Amazon Connect (in this repo)
+## Transport boundary
 
-| Channel | Entry | Transport to OpenAI |
-|--------|--------|---------------------|
-| Twilio | `service/twilio-phone` → `/twilio-phone/incoming-call` + `/twilio-phone/media-stream` | `@openai/agents-extensions` Twilio transport |
-| Connect + OpenAI SIP | `service/amazon-connect-phone` → OpenAI webhook | REST `accept` + native Realtime WS |
-
-You can run **both** on the same server if you enable Twilio and set `AMAZON_CONNECT_PHONE_ENABLE=true`.
+Amazon Connect sends call audio to OpenAI over SIP. This service receives the OpenAI webhook and uses REST `accept` plus an outbound Realtime WebSocket for session events and tools; it does not proxy the audio stream.

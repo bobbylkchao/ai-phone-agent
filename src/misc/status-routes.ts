@@ -1,6 +1,5 @@
 import type { Express, Request, Response } from 'express'
 import { mcpServerList } from '@/foundation/mcp-server'
-import { TWILIO_PHONE_INCOMING_CALL_PATH } from '@/service/twilio-phone/constants'
 
 export interface StatusServiceRow {
   id: string
@@ -26,13 +25,8 @@ const publicBase = (req: Request, port: number): string => {
 export const buildStatusPayload = (req: Request, port: number) => {
   const base = publicBase(req, port)
 
-  const twilioEnabled =
-    process.env.TWILIO_PHONE_ENABLE === 'true' &&
-    Boolean(process.env.TWILIO_WEBHOOK_URL)
-  const twilioWebhookUrl = process.env.TWILIO_WEBHOOK_URL || ''
-
-  const connectPhoneEnabled = process.env.AMAZON_CONNECT_PHONE_ENABLE === 'true'
   const connectWebhookBase = process.env.AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH
+  const connectPhoneReady = Boolean(connectWebhookBase)
   const connectIncomingUrl = `${base}${connectWebhookBase}/incoming-call`
 
   const connectSdkEnabled = process.env.AMAZON_CONNECT_SDK_ENABLE === 'true'
@@ -42,32 +36,20 @@ export const buildStatusPayload = (req: Request, port: number) => {
       id: 'http',
       name: 'HTTP server',
       ready: true,
-      endpoints: [{ label: 'Base URL', url: base }],
-    },
-    {
-      id: 'twilio-phone',
-      name: 'Twilio phone',
-      ready: twilioEnabled,
-      detail: twilioEnabled
-        ? 'TwiML + Media Stream'
-        : 'Set TWILIO_PHONE_ENABLE=true and TWILIO_WEBHOOK_URL',
       endpoints: [
-        {
-          label: 'TwiML webhook (voice)',
-          url: `${base}${TWILIO_PHONE_INCOMING_CALL_PATH}`,
-        },
-        ...(twilioWebhookUrl
-          ? [{ label: 'Media Stream (WebSocket)', url: twilioWebhookUrl }]
-          : []),
+        { label: 'Base URL', url: base },
+        { label: 'Health', url: `${base}/health` },
+        { label: 'Status', url: `${base}/status` },
+        { label: 'Status JSON', url: `${base}/status.json` },
       ],
     },
     {
       id: 'amazon-connect-phone',
       name: 'Amazon Connect phone (OpenAI SIP)',
-      ready: connectPhoneEnabled,
-      detail: connectPhoneEnabled
+      ready: connectPhoneReady,
+      detail: connectPhoneReady
         ? 'realtime.call.incoming'
-        : 'Set AMAZON_CONNECT_PHONE_ENABLE=true',
+        : 'Set AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH',
       endpoints: [
         {
           label: 'OpenAI webhook POST',
@@ -170,7 +152,7 @@ const renderStatusHtml = (
 </head>
 <body>
   <div class="wrap">
-    <h1>Realtime voice agent — status</h1>
+    <h1>AI Phone Agent — status</h1>
     <p class="sub">Generated ${escapeHtml(payload.generatedAt)} · Port ${payload.port}</p>
     ${serviceCards}
     <h3>MCP servers</h3>
@@ -189,6 +171,10 @@ const renderStatusHtml = (
 }
 
 export const registerStatusRoutes = (app: Express, port: number): void => {
+  app.get('/health', (_req: Request, res: Response) => {
+    res.sendStatus(200)
+  })
+
   app.get('/status.json', (req: Request, res: Response) => {
     res.json(buildStatusPayload(req, port))
   })

@@ -1,7 +1,17 @@
-# Claude Code (optional)
+# Claude Code project configuration
 
-This folder is for **Claude Code** project-level configuration when you use it in this repository.
+This directory uses Claude Code's official project configuration locations:
 
-- **Project instructions for the AI** live in the repo root **`CLAUDE.md`** (same content as **`AGENTS.md`**).
-- This repo includes a minimal **`settings.json`** (schema only). Extend it for shared [permissions / tool defaults](https://docs.anthropic.com/en/docs/claude-code/settings) as needed.
-- Prefer **`settings.local.json`** for machine-specific overrides and add that filename to `.gitignore` if it contains personal paths or secrets.
+- Root `CLAUDE.md` imports the shared `AGENTS.md` guidance.
+- `rules/` contains path-scoped instructions.
+- `skills/` contains on-demand project workflows.
+- `settings.json` contains shared safety permissions.
+
+- Use `settings.local.json` for personal project overrides; it is gitignored.
+- Do not put secrets or machine-specific paths in committed settings.
+
+Official documentation:
+
+- [Project memory and rules](https://code.claude.com/docs/en/memory)
+- [Skills](https://code.claude.com/docs/en/skills)
+- [Settings](https://code.claude.com/docs/en/settings)

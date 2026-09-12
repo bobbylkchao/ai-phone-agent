@@ -20,7 +20,7 @@ export const initPostBookingMcpServer = (app: Express, _port: number) => {
       })
 
       res.on('close', () => {
-        transport.close()
+        void transport.close()
       })
 
       try {

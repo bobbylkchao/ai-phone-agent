@@ -34,9 +34,7 @@ export interface UserToUserInfo {
 }
 
 export type RealtimeCallIncomingEventSipHeaderName =
-  | 'X-Amzn-SourceArn'
-  | 'X-Amzn-ConnectContactId'
-  | 'User-to-User'
+  'X-Amzn-SourceArn' | 'X-Amzn-ConnectContactId' | 'User-to-User'
 
 export interface RealtimeCallIncomingEventSipHeader {
   name: RealtimeCallIncomingEventSipHeaderName
