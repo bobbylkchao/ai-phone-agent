@@ -1,19 +1,30 @@
+import type { z } from 'zod'
+
+export interface VoiceAgentTool {
+  name: string
+  description: string
+  parameters: z.ZodType<unknown>
+  /** OpenAI Realtime `function` tool `parameters` JSON Schema */
+  parametersJsonSchema: unknown
+  execute: (callId: string, args: unknown) => Promise<unknown>
+}
+
+export interface VoiceAgentDefinition {
+  getInstructions: (metaData: AmazonConnectOpenAiVoiceAgentMetaData) => string
+  tools?: VoiceAgentTool[]
+}
+
 /**
  * Session metadata derived from SIP headers or passed at accept time.
- * Extend this type in your fork for business-specific fields (see phone-sales-ai-copilot).
+ * Keep product-specific data in the injected application layer.
  */
 export interface AmazonConnectOpenAiVoiceAgentMetaData {
   contactId?: string
   initialContactId?: string
   queueName?: string
-  languageCode?: string
-  partnerName?: string
-  businessType?: string
+  initiationMethod?: string
   customerPhoneNumber?: string
   systemPhoneNumber?: string
-  initiationMethod?: string
-  /** Raw Amazon resource ARN from X-Amzn-SourceArn when present */
-  amazonConnectSourceArn?: string
 }
 
 /**
@@ -21,16 +32,12 @@ export interface AmazonConnectOpenAiVoiceAgentMetaData {
  * Format: "<hex>;encoding=hex" (RFC 7433 style).
  */
 export interface UserToUserInfo {
-  systemPhoneNumber?: string
-  customerPhoneNumber?: string
   contactId?: string
   initialContactId?: string
   queueName?: string
   initiationMethod?: string
-  languageCode?: string
-  partnerName?: string
-  businessType?: string
-  [key: string]: unknown
+  customerPhoneNumber?: string
+  systemPhoneNumber?: string
 }
 
 export type RealtimeCallIncomingEventSipHeaderName =

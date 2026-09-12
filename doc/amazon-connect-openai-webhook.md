@@ -4,8 +4,6 @@
 
 This server can handle **OpenAI Realtime phone calls** that arrive over **SIP**, including calls routed from **Amazon Connect**, using the same flow as in [OpenAI’s Realtime Calls / SIP integration](https://platform.openai.com/docs/guides/realtime-sip): your server receives a `realtime.call.incoming` webhook, calls **accept** on the call, then opens a **client WebSocket** to `wss://api.openai.com/v1/realtime?call_id=...` for session events and function calling.
 
-Layout aligns with `phone-sales-ai-copilot`’s `phone-sales-ai-voice-agent` service, but in this repo it lives under **`service/amazon-connect-phone/openai-sip-webhook/`** (channel) and shared pieces under **`foundation/`**.
-
 | Area | Path in this repo |
 |------|-------------------|
 | Channel bootstrap | `src/service/amazon-connect-phone/index.ts` |
@@ -15,7 +13,9 @@ Layout aligns with `phone-sales-ai-copilot`’s `phone-sales-ai-voice-agent` ser
 | OpenAI WS | `src/service/amazon-connect-phone/openai-sip-webhook/websocket/connect-to-call.ts` |
 | Session client events | `src/service/amazon-connect-phone/openai-sip-webhook/client-side-events/` |
 | Tools | `src/service/amazon-connect-phone/openai-sip-webhook/tools/` |
-| Instructions builder | `src/service/amazon-connect-phone/openai-sip-webhook/agents/entry-agent.ts` |
+| Agent contract | `src/service/amazon-connect-phone/openai-sip-webhook/types.ts` |
+| Connect metadata instructions | `src/service/amazon-connect-phone/openai-sip-webhook/agents/entry-agent.ts` |
+| Replaceable example | `src/example/hotel-booking/` |
 | Connect SDK (optional) | `src/foundation/amazon-connect/` |
 | OpenAI REST helper | `src/foundation/open-ai/send-http-request.ts` |
 
@@ -56,8 +56,7 @@ For local development, see [Local testing: Amazon Connect + OpenAI SIP](./local-
 
 The handler parses SIP headers from the webhook payload:
 
-- **`X-Amzn-SourceArn`** — stored as `amazonConnectSourceArn` in session metadata.
-- **`User-to-User`** — hex-encoded JSON (`;encoding=hex`), decoded into `UserToUserInfo` and mapped into `AmazonConnectOpenAiVoiceAgentMetaData` (e.g. `contactId`, `customerPhoneNumber`, `queueName`).
+- **`User-to-User`** — hex-encoded JSON (`;encoding=hex`), decoded into `UserToUserInfo` and mapped into `AmazonConnectOpenAiVoiceAgentMetaData` (`contactId`, `initialContactId`, `queueName`, `initiationMethod`, `customerPhoneNumber`, `systemPhoneNumber`).
 
 Extend `openai-sip-webhook/types.ts` and `webhook/incoming-call.ts` if your contact flow sends additional fields.
 
@@ -77,18 +76,14 @@ If `AMAZON_CONNECT_SDK_ENABLE` is not `true` or the client fails to init, the to
 
 **Attributes (when the SDK path runs):**
 
-- **`transfer_to_human_agent`:** `AIVoiceAgentHandoff` = `"true"`; `AIVoiceAgentConversationSummary` = optional model `summary` for the next agent; `AIVoiceAgentHandoffPayload` = JSON string of trip intake (from `update_trip_intake`).
+- **`transfer_to_human_agent`:** `AIVoiceAgentHandoff` = `"true"`; `AIVoiceAgentConversationSummary` = optional model `summary` for the next agent.
 - **`disconnect_the_call`:** `AIVoiceAgentHandoff` = `"false"`; `AIVoiceAgentConversationSummary` = optional model `summary` for audit (no PII—use “Customer” only; brief chronological narrative: topic, customer needs, who asked to hang up).
 
 ## Customizing behavior
 
-- **Instructions**: Edit `openai-sip-webhook/agents/entry-agent.ts` or replace `getPhoneAgentInstructions`. The default is `agents/sip-instructions.ts` (name-first intake, trip requirements, then handoff).
-
-### Why the assistant used to mention hotels or dates “from session”
-
-Nothing in this template’s `accept` body injects hotel names or check-in/out dates from Amazon Connect unless **you** add those fields to `AmazonConnectOpenAiVoiceAgentMetaData`, map them from SIP `User-to-User` in `webhook/incoming-call.ts`, and print them into instructions. The SIP prompt explicitly forbids inventing itinerary details and only uses Connect metadata as routing hints (see `entry-agent.ts` “session context” section).
-
-- **Tools**: `update_trip_intake` (merge name + trip notes), `transfer_to_human_agent` / `disconnect_the_call` (set handoff flag, summary, and intake payload as in [Optional: UpdateContactAttributes](#optional-updatecontactattributes-on-hang-up) when `AMAZON_CONNECT_SDK_ENABLE=true`, then hang up the OpenAI call leg). Add more tools in `openai-sip-webhook/tools/` and register them in `tools/index.ts` with matching Zod + `parametersJsonSchema`.
+- **Instructions:** Implement `VoiceAgentDefinition` in an application or example module and inject it from `src/index.ts`. Do not put product prompts in the SIP core.
+- **Application tools:** Add Zod-based `VoiceAgentTool` objects to the active definition. The core combines them with `transfer_to_human_agent` and `disconnect_the_call`.
+- **MCP:** The hotel example exposes an independent MCP stub at `/hotel-booking-mcp`; it is not attached to the phone session. For a callable production integration, configure OpenAI Realtime with a public HTTPS Remote MCP `server_url`, or add an application-owned function-tool adapter.
 - **Handoff hangup timing**: If the model speaks and calls `transfer_to_human_agent` or `disconnect_the_call` in the same response, hanging up immediately can cut off playback. The server waits for `response.done` (with that tool in `output`), then delays hangup: `SIP_TRANSFER_AUDIO_TAIL_MS` for transfer, `SIP_DISCONNECT_AUDIO_TAIL_MS` for disconnect (each defaults to 3500 ms). See `websocket/transfer-hangup-scheduler.ts` and `websocket/disconnect-hangup-scheduler.ts`.
 - **Idle timeout**: `openai-sip-webhook/websocket/connect-to-call.ts` exports `onConversationTimeout` if you want to prompt or hang up after silence.
 

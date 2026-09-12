@@ -13,8 +13,9 @@ loads it through the import in `CLAUDE.md`.
 
 | Area | Role |
 |------|------|
-| `src/foundation/` | OpenAI helpers, MCP servers, and Amazon Connect SDK helpers. |
-| `src/service/amazon-connect-phone/` | Connect: incoming webhook, accept/hangup, Realtime WS, tools, SIP instructions. |
+| `src/foundation/` | Generic OpenAI, MCP hosting, and Amazon Connect SDK helpers. |
+| `src/service/amazon-connect-phone/` | Generic Connect webhook, call lifecycle, Realtime WS, and core tools. |
+| `src/example/hotel-booking/` | Replaceable example instructions and hotel-search MCP stub. |
 | `doc/` | Architecture and integration guides — **read before large changes.** |
 | `src/**/test/` | Jest suites, one file per source file (`src/misc/test/logger.test.ts` covers `src/misc/logger.ts`). |
 
@@ -27,8 +28,9 @@ Imports use **`@/*` → `src/*`**; build uses **`tsc-alias`** for `dist/`.
 - **Lint / format** — ESLint uses the official recommended JavaScript config plus type-checked `typescript-eslint`, with Prettier disabling conflicting formatting rules. Run `npm run lint` and `npm run format` before you finish.
 - **TypeScript** — prefer arrow functions for new named helpers and callbacks unless hoisting or a dynamic `this` is required.
 - **Tests** — every executable source file has a matching test in the sibling `test/` directory; add or update it in the same change.
-- **Tools** — New Realtime tools: Zod schema + matching `parametersJsonSchema`, register in `openai-sip-webhook/tools/index.ts` (same pattern as existing tools).
-- **Phone prompts** — Connect SIP: `openai-sip-webhook/agents/` (e.g. `sip-instructions.ts`, `entry-agent.ts`).
+- **Boundary** — Keep business prompts and tools under `src/example/` (or a product module); inject them through `VoiceAgentDefinition`. Do not add product semantics to the Connect/SIP core.
+- **Tools** — New Realtime function tools use a Zod schema plus matching `parametersJsonSchema`, then are supplied through the active `VoiceAgentDefinition`.
+- **Phone prompts** — Example prompts belong under their example module. `openai-sip-webhook/agents/entry-agent.ts` only appends generic Connect metadata.
 
 ## Security
 
@@ -55,7 +57,11 @@ npm run test:coverage
 - [doc/ai-phone-agent-architecture.md](./doc/ai-phone-agent-architecture.md)
 - [doc/amazon-connect-openai-webhook.md](./doc/amazon-connect-openai-webhook.md)
 - [doc/local-testing-amazon-connect-sip.md](./doc/local-testing-amazon-connect-sip.md)
+- [doc/ideas/](./doc/ideas/) — exploration notes (not product spec)
 
 ## Demo vs product
 
-Booking/post-booking MCP and trip-intake examples are **illustrative** — replace with your own product logic and compliance rules.
+The hotel-booking prompt and hotel-search MCP stub are **illustrative**. The MCP
+stub is not connected to the phone session. Replace the active agent definition,
+tool implementations, authorization, persistence, and compliance rules in a
+real product.

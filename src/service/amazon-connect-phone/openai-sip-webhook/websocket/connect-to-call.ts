@@ -6,7 +6,7 @@ import {
   sendSessionUpdateSpeed,
 } from '../client-side-events'
 import { deleteCall, getContactId } from '../call-store'
-import { handleMessageIfToolCall } from '../tools'
+import { handleMessageIfToolCall, type VoiceAgentTool } from '../tools'
 import {
   clearDisconnectHangupSchedule,
   noteDisconnectResponseDone,
@@ -76,7 +76,8 @@ export const closeOpenAiSipWebSocketForCall = (callId: string): void => {
 
 export const connectOpenAiSipRealtimeWebSocket = (
   callId: string,
-  contactId: string
+  contactId: string,
+  agentTools: VoiceAgentTool[] = []
 ): WebSocket => {
   const key = contactId || callId
   const apiKey = process.env.OPENAI_API_KEY
@@ -139,7 +140,7 @@ export const connectOpenAiSipRealtimeWebSocket = (
 
     noteTransferResponseDone(callId, message)
     noteDisconnectResponseDone(callId, message)
-    await handleMessageIfToolCall(callId, message, ws)
+    await handleMessageIfToolCall(callId, message, ws, agentTools)
   })
 
   ws.on('close', () => {

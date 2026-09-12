@@ -1,26 +1,23 @@
 import type { AmazonConnectOpenAiVoiceAgentMetaData } from '../types'
-import { getSipVoiceAgentInstructions } from './sip-instructions'
+import type { VoiceAgentDefinition } from '../types'
 
 const buildConnectContextSection = (
   meta: AmazonConnectOpenAiVoiceAgentMetaData
 ): string => {
   const lines: string[] = [
-    '## Amazon Connect session context (routing / metadata only) ##',
-    '- These fields are for language and routing. They are **not** a confirmed hotel booking or travel itinerary unless explicitly stated as such below.',
+    '## Amazon Connect session context ##',
+    '- Treat these values as call metadata, not as user-provided business data.',
   ]
   if (meta.contactId) lines.push(`- Contact ID: ${meta.contactId}`)
+  if (meta.initialContactId)
+    lines.push(`- Initial contact ID: ${meta.initialContactId}`)
   if (meta.queueName) lines.push(`- Queue: ${meta.queueName}`)
-  if (meta.languageCode) lines.push(`- Language: ${meta.languageCode}`)
-  if (meta.partnerName)
-    lines.push(`- Partner / brand label: ${meta.partnerName}`)
-  if (meta.businessType)
-    lines.push(
-      `- Business type (operational label, not a customer itinerary): ${meta.businessType}`
-    )
+  if (meta.initiationMethod)
+    lines.push(`- Initiation method: ${meta.initiationMethod}`)
   if (meta.customerPhoneNumber)
     lines.push(`- Customer phone (from Connect): ${meta.customerPhoneNumber}`)
-  if (meta.amazonConnectSourceArn)
-    lines.push(`- Source ARN: ${meta.amazonConnectSourceArn}`)
+  if (meta.systemPhoneNumber)
+    lines.push(`- System phone (from Connect): ${meta.systemPhoneNumber}`)
   if (lines.length === 2) {
     return ''
   }
@@ -29,14 +26,14 @@ const buildConnectContextSection = (
 
 /**
  * Builds instructions for POST /v1/realtime/calls/{call_id}/accept.
- * SIP uses dedicated intake and handoff prompts from `sip-instructions.ts`.
  */
 export const getPhoneAgentInstructions = (
+  agent: VoiceAgentDefinition,
   metaData: AmazonConnectOpenAiVoiceAgentMetaData = {}
 ): string => {
   const connectContext = buildConnectContextSection(metaData)
 
-  return [getSipVoiceAgentInstructions(metaData), connectContext]
+  return [agent.getInstructions(metaData), connectContext]
     .filter(Boolean)
     .join('\n\n')
     .trim()

@@ -1,34 +1,38 @@
 import { getPhoneAgentInstructions } from '../entry-agent'
+import type { VoiceAgentDefinition } from '../../types'
+
+const agent: VoiceAgentDefinition = {
+  getInstructions: () => 'You are a generic voice agent.',
+}
 
 describe('getPhoneAgentInstructions', () => {
   it('omits the Connect context when no routing metadata is present', () => {
-    expect(getPhoneAgentInstructions()).not.toContain(
+    expect(getPhoneAgentInstructions(agent)).not.toContain(
       'Amazon Connect session context'
+    )
+    expect(getPhoneAgentInstructions(agent)).toContain(
+      'You are a generic voice agent.'
     )
   })
 
   it('appends every routing field that Connect provided', () => {
-    const instructions = getPhoneAgentInstructions({
-      partnerName: 'Northwind Travel',
+    const instructions = getPhoneAgentInstructions(agent, {
       contactId: 'contact-1',
+      initialContactId: 'initial-1',
       queueName: 'Sales',
-      languageCode: 'en-US',
-      businessType: 'leisure',
+      initiationMethod: 'INBOUND',
       customerPhoneNumber: '+15550000000',
-      amazonConnectSourceArn: 'arn:aws:connect:example',
+      systemPhoneNumber: '+15551111111',
     })
 
     expect(instructions).toContain('Amazon Connect session context')
     expect(instructions).toContain('Contact ID: contact-1')
+    expect(instructions).toContain('Initial contact ID: initial-1')
     expect(instructions).toContain('Queue: Sales')
-    expect(instructions).toContain('Language: en-US')
-    expect(instructions).toContain('Partner / brand label: Northwind Travel')
-    expect(instructions).toContain(
-      'Business type (operational label, not a customer itinerary): leisure'
-    )
+    expect(instructions).toContain('Initiation method: INBOUND')
     expect(instructions).toContain(
       'Customer phone (from Connect): +15550000000'
     )
-    expect(instructions).toContain('Source ARN: arn:aws:connect:example')
+    expect(instructions).toContain('System phone (from Connect): +15551111111')
   })
 })

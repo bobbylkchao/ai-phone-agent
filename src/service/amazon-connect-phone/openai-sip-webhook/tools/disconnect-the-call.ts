@@ -6,7 +6,7 @@ import { hangUpOpenAiSipCall } from '../handle-call/hang-up-call'
 import { closeOpenAiSipWebSocketForCall } from '../websocket/connect-to-call'
 
 const summaryDescribe =
-  'Short plain narrative of the call for audit (no PII): never include real name, email, phone, or other identifiers—refer to the caller only as "Customer". Write a simple chronological log: what the call was about, what the customer wanted or asked, what the assistant said or offered, and who asked to hang up (Customer or AI agent). Do not use field labels such as "Initiator" or "Reason"—just a few flowing sentences. Use the same language as the conversation when practical. Example: "Customer asked if this line was a specific hotel; assistant said we are a travel service, not the hotel; Customer said they only wanted to reach the hotel and asked to end the call."'
+  'Short plain narrative of the call for audit (no PII): never include real name, email, phone, or other identifiers—refer to the caller only as "Customer". Write a simple chronological log of the request, the response, and who asked to end the call. Do not use field labels such as "Initiator" or "Reason". Use the same language as the conversation when practical.'
 
 const disconnectTheCallParams = z.object({
   summary: z.string().optional().describe(summaryDescribe),

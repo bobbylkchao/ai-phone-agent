@@ -1,5 +1,5 @@
 import type WebSocket from 'ws'
-import { z } from 'zod'
+import type { VoiceAgentTool } from '../types'
 import {
   sendFunctionCallOutput,
   sendResponseCreateEvent,
@@ -8,31 +8,28 @@ import { queueDisconnectToolArguments } from '../websocket/disconnect-hangup-sch
 import { queueTransferToolArguments } from '../websocket/transfer-hangup-scheduler'
 import { disconnectTheCallTool } from './disconnect-the-call'
 import { transferToHumanAgentTool } from './transfer-to-human-agent'
-import { updateTripIntakeTool } from './update-trip-intake'
 
-export interface VoiceAgentTool {
-  name: string
-  description: string
-  parameters: z.ZodType<unknown>
-  /** OpenAI Realtime \`function\` tool \`parameters\` JSON Schema */
-  parametersJsonSchema: unknown
-  execute: (callId: string, args: unknown) => Promise<void>
-}
+export type { VoiceAgentTool } from '../types'
 
-const voiceAgentTools: VoiceAgentTool[] = [
-  updateTripIntakeTool,
+const coreVoiceAgentTools: VoiceAgentTool[] = [
   transferToHumanAgentTool,
   disconnectTheCallTool,
 ]
 
+const getVoiceAgentTools = (
+  agentTools: VoiceAgentTool[] = []
+): VoiceAgentTool[] => [...coreVoiceAgentTools, ...agentTools]
+
 /** Realtime function tools for POST .../realtime/calls/{call_id}/accept */
-export const getRealtimeToolsConfig = (): Array<{
+export const getRealtimeToolsConfig = (
+  agentTools: VoiceAgentTool[] = []
+): Array<{
   type: 'function'
   name: string
   description: string
   parameters: unknown
 }> =>
-  voiceAgentTools.map((tool) => ({
+  getVoiceAgentTools(agentTools).map((tool) => ({
     type: 'function' as const,
     name: tool.name,
     description: tool.description,
@@ -42,21 +39,18 @@ export const getRealtimeToolsConfig = (): Array<{
 export const executeTool = async (
   callId: string,
   toolName: string,
-  rawArgs: string | Record<string, unknown>
-): Promise<void> => {
-  const tool = voiceAgentTools.find((t) => t.name === toolName)
+  rawArgs: string | Record<string, unknown>,
+  agentTools: VoiceAgentTool[] = []
+): Promise<unknown> => {
+  const tool = getVoiceAgentTools(agentTools).find((t) => t.name === toolName)
   if (!tool) return
   const args =
     typeof rawArgs === 'string'
       ? (JSON.parse(rawArgs || '{}') as Record<string, unknown>)
       : rawArgs
   const parsed = tool.parameters.parse(args ?? {})
-  await tool.execute(callId, parsed)
+  return tool.execute(callId, parsed)
 }
-
-const toolNames = new Set(voiceAgentTools.map((t) => t.name))
-
-const handoffToolNames = new Set([disconnectTheCallTool.name])
 
 /**
  * Handles conversation.item.done with function_call for registered tools.
@@ -64,8 +58,10 @@ const handoffToolNames = new Set([disconnectTheCallTool.name])
 export const handleMessageIfToolCall = async (
   callId: string,
   message: unknown,
-  ws: WebSocket
+  ws: WebSocket,
+  agentTools: VoiceAgentTool[] = []
 ): Promise<boolean> => {
+  const toolNames = new Set(getVoiceAgentTools(agentTools).map((t) => t.name))
   const m = message as {
     type?: string
     item?: {
@@ -100,9 +96,14 @@ export const handleMessageIfToolCall = async (
     return true
   }
 
-  await executeTool(callId, toolName, m.item.arguments ?? '{}')
-  if (!handoffToolNames.has(toolName) && functionCallId) {
-    sendFunctionCallOutput(ws, functionCallId, '{}')
+  const result = await executeTool(
+    callId,
+    toolName,
+    m.item.arguments ?? '{}',
+    agentTools
+  )
+  if (functionCallId) {
+    sendFunctionCallOutput(ws, functionCallId, JSON.stringify(result ?? {}))
     sendResponseCreateEvent(ws)
   }
   return true

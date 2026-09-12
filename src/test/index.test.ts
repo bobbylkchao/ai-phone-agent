@@ -2,6 +2,8 @@ import express from 'express'
 import { config } from 'dotenv'
 import { createServer } from 'node:http'
 import { initMcpServers } from '@/foundation/mcp-server'
+import { hotelBookingAgent } from '@/example/hotel-booking/agent'
+import { hotelBookingMcpServer } from '@/example/hotel-booking/mcp-server'
 import logger from '@/misc/logger'
 import { registerStatusRoutes } from '@/misc/status-routes'
 import { initAmazonConnectPhoneChannel } from '@/service/amazon-connect-phone'
@@ -16,6 +18,16 @@ jest.mock('express', () => {
 jest.mock('dotenv', () => ({ config: jest.fn() }))
 jest.mock('node:http', () => ({ createServer: jest.fn() }))
 jest.mock('@/foundation/mcp-server', () => ({ initMcpServers: jest.fn() }))
+jest.mock('@/example/hotel-booking/agent', () => ({
+  hotelBookingAgent: { getInstructions: jest.fn() },
+}))
+jest.mock('@/example/hotel-booking/mcp-server', () => ({
+  hotelBookingMcpServer: {
+    name: 'hotel-booking-example',
+    path: '/hotel-booking-mcp',
+    registerTools: jest.fn(),
+  },
+}))
 jest.mock('@/misc/status-routes', () => ({ registerStatusRoutes: jest.fn() }))
 jest.mock('@/service/amazon-connect-phone', () => ({
   initAmazonConnectPhoneChannel: jest.fn(),
@@ -56,10 +68,15 @@ describe('application startup', () => {
     expect(config).toHaveBeenCalledWith({ quiet: true })
     expect(app.use).toHaveBeenNthCalledWith(1, 'json-middleware')
     expect(app.use).toHaveBeenNthCalledWith(2, 'urlencoded-middleware')
-    expect(registerStatusRoutes).toHaveBeenCalledWith(app, 4567)
+    expect(registerStatusRoutes).toHaveBeenCalledWith(app, 4567, [
+      { name: 'hotel-booking-example', path: '/hotel-booking-mcp' },
+    ])
     expect(createServer).toHaveBeenCalledWith(app)
-    expect(initAmazonConnectPhoneChannel).toHaveBeenCalledWith(app)
-    expect(initMcpServers).toHaveBeenCalledWith(app, 4567)
+    expect(initAmazonConnectPhoneChannel).toHaveBeenCalledWith(
+      app,
+      hotelBookingAgent
+    )
+    expect(initMcpServers).toHaveBeenCalledWith(app, [hotelBookingMcpServer])
     expect(server.on).toHaveBeenCalledWith('error', expect.any(Function))
     expect(server.listen).toHaveBeenCalledWith(4567, expect.any(Function))
 
@@ -75,7 +92,9 @@ describe('application startup', () => {
 
     loadApplication()
 
-    expect(registerStatusRoutes).toHaveBeenCalledWith(app, 4000)
+    expect(registerStatusRoutes).toHaveBeenCalledWith(app, 4000, [
+      { name: 'hotel-booking-example', path: '/hotel-booking-mcp' },
+    ])
     expect(server.listen).toHaveBeenCalledWith(4000, expect.any(Function))
   })
 
