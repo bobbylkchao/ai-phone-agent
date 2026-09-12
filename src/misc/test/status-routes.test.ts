@@ -38,6 +38,21 @@ describe('status routes', () => {
     expect(jsonResponse.body.services[1].endpoints[0].url).toBe(
       'http://phone.example/connect/incoming-call'
     )
+
+    const httpsJson = await request(app)
+      .get('/status.json')
+      .set('Host', 'ai-phone-agent.bobbylkchao.com')
+      .set('X-Forwarded-Proto', 'https, http')
+      .expect(200)
+    expect(httpsJson.body.services[0].endpoints[0].url).toBe(
+      'https://ai-phone-agent.bobbylkchao.com'
+    )
+    expect(httpsJson.body.services[1].endpoints[0].url).toBe(
+      'https://ai-phone-agent.bobbylkchao.com/connect/incoming-call'
+    )
+    expect(httpsJson.body.mcpServers[0].url).toBe(
+      'https://ai-phone-agent.bobbylkchao.com/hotel-booking-mcp'
+    )
     expect(jsonResponse.body.mcpServers).toEqual([
       {
         name: 'hotel-booking-example',
