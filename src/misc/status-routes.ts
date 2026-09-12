@@ -94,20 +94,25 @@ export const buildStatusPayload = (
   return {
     generatedAt: new Date().toISOString(),
     port,
+    baseUrl: base,
     services,
     mcpServers: mcp,
   }
 }
+
+/** Path portion of an endpoint, so the browser can prefix its own origin. */
+const relativePath = (url: string, base: string): string =>
+  url.startsWith(base) ? url.slice(base.length) : url
 
 const renderStatusHtml = (
   payload: ReturnType<typeof buildStatusPayload>
 ): string => {
   const rows = (s: StatusServiceRow) =>
     s.endpoints
-      .map(
-        (e) =>
-          `<tr><td class="muted">${escapeHtml(e.label)}</td><td><code>${escapeHtml(e.url)}</code></td></tr>`
-      )
+      .map((e) => {
+        const path = escapeHtml(relativePath(e.url, payload.baseUrl))
+        return `<tr><td class="muted">${escapeHtml(e.label)}</td><td><code data-path="${path}">${escapeHtml(e.url)}</code></td></tr>`
+      })
       .join('')
 
   const serviceCards = payload.services
@@ -128,10 +133,10 @@ const renderStatusHtml = (
     .join('\n')
 
   const mcpRows = payload.mcpServers
-    .map(
-      (m) =>
-        `<tr><td>${escapeHtml(m.name)}</td><td><code>${escapeHtml(m.url)}</code></td><td>${m.ready ? '<span class="ok">Ready</span>' : '—'}</td></tr>`
-    )
+    .map((m) => {
+      const path = escapeHtml(relativePath(m.url, payload.baseUrl))
+      return `<tr><td>${escapeHtml(m.name)}</td><td><code data-path="${path}">${escapeHtml(m.url)}</code></td><td>${m.ready ? '<span class="ok">Ready</span>' : '—'}</td></tr>`
+    })
     .join('')
 
   return `<!DOCTYPE html>
@@ -179,6 +184,13 @@ const renderStatusHtml = (
       JSON: <a href="/status.json">/status.json</a>
     </footer>
   </div>
+  <script>
+    // The browser knows the real scheme and host; proxies and CDNs rewrite the
+    // forwarded headers we would otherwise have to guess from.
+    document.querySelectorAll('code[data-path]').forEach(function (el) {
+      el.textContent = window.location.origin + el.getAttribute('data-path')
+    })
+  </script>
 </body>
 </html>`
 }

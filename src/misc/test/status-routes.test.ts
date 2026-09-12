@@ -68,6 +68,13 @@ describe('status routes', () => {
       .expect('Content-Type', /html/)
     expect(htmlResponse.text).toContain('AI Phone Agent — status')
     expect(htmlResponse.text).toContain('&lt;unsafe.example&gt;')
+    // the browser rewrites these against its own origin
+    expect(htmlResponse.text).toContain('<code data-path="/health">')
+    expect(htmlResponse.text).toContain(
+      '<code data-path="/connect/incoming-call">'
+    )
+    expect(htmlResponse.text).toContain('<code data-path="/hotel-booking-mcp">')
+    expect(htmlResponse.text).toContain('window.location.origin')
   })
 
   it('reports missing optional configuration', () => {
