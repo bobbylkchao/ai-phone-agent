@@ -2,7 +2,7 @@
 
 Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
-`npm ci` reads [`.npmrc`](../.npmrc). **`legacy-peer-deps=true`** is set so installs succeed: `@kesills/eslint-config-airbnb-typescript` declares a peer on ESLint 8 while this repo uses ESLint 9 (same resolution as local `npm install`).
+`npm ci` reads [`.npmrc`](../.npmrc) (npm registry only). ESLint uses the official recommended JavaScript config plus type-checked `typescript-eslint` and Prettier.
 
 ## What runs on a PR
 
@@ -12,7 +12,9 @@ Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
 2. **ESLint** — `npm run lint:ci` (`eslint … --max-warnings 0`). Any **error** or **warning** fails the job (warnings are not ignored).
 
-The **lint** job runs **after** the **format** job so it lints the latest tree (including any formatting commit).
+3. **Jest** — `npm run test:ci` runs the unit suite serially with coverage and enforces the thresholds in `jest.config.cjs`.
+
+The **lint** job runs **after** the **format** job, then runs Jest against the latest tree (including any formatting commit).
 
 ## Requiring a pull request (no direct merge to `master`)
 
@@ -31,4 +33,6 @@ Direct pushes to the protected branch are then blocked unless allowed for admins
 npm run format
 npm run lint      # with --fix
 npm run lint:ci   # strict; same as CI
+npm test          # watch-free local unit test run
+npm run test:coverage
 ```

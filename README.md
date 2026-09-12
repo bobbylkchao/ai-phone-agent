@@ -1,108 +1,109 @@
-# AI Phone Agent Starter Kit
+# AI Phone Agent for Amazon Connect
 
-<p align="center">
-  <img src="./doc/assets/ai-phone-agent.png" alt="AI Phone Agent: caller connects via Twilio or Amazon Connect; the backend lets an AI answer and talk on the call." width="720" />
-</p>
+A production-oriented Node.js and TypeScript backend for real-time AI phone calls through **Amazon Connect**, **OpenAI SIP**, and the **OpenAI Realtime API**.
 
-**A production-oriented starter kit for building AI agents that answer real phone calls and talk to customers in real time using OpenAI’s [Realtime API](https://platform.openai.com/docs/guides/realtime).**
+Callers enter through Amazon Connect and are routed to OpenAI over SIP. OpenAI sends this service a `realtime.call.incoming` webhook; the service accepts the call, opens a Realtime WebSocket for session events and function calls, and can update Amazon Connect contact attributes before transferring or disconnecting.
 
-This project is a **Node.js / TypeScript backend** you connect to **Twilio** or **Amazon Connect**. Callers dial a normal business number; audio flows into your server and to **OpenAI Realtime**, so the AI can listen, speak, run tools (hang up, transfer to a human, collect structured info), and optionally use **[MCP](https://modelcontextprotocol.io/)**-backed tools. It is built for teams that want a **clear, deployable baseline** for **phone-first** voice agents—not a generic demo, but patterns you can ship and replace with your own product logic.
+## Architecture
 
-## Architecture at a glance
+```text
+Caller
+  → Amazon Connect contact flow
+  → OpenAI SIP / Realtime
+  → POST /amazon-connect-phone/incoming-call
+  → accept call + Realtime WebSocket
+  → voice instructions and tools
+  → transfer to an agent or disconnect
+```
 
-Two call paths are supported: **Amazon Connect** (SIP → OpenAI Realtime webhook) and **Twilio** (TwiML + Media Streams). The diagrams below summarize how each path reaches this backend and OpenAI Realtime.
+The audio plane stays between Amazon Connect and OpenAI. This backend is the control plane: it owns webhook handling, call state, prompts, tool execution, handoff timing, and optional Amazon Connect SDK calls.
 
-### Amazon Connect + AI Phone Agent
+## Design principles
 
-<p align="center">
-  <img src="./doc/assets/high-level-design-amazon-connect.png" alt="High-level flow: Amazon Connect IVR, SIP connector, OpenAI SIP and Realtime, webhook, AI Phone Agent accept and connect, transfer back to IVR" width="720" />
-</p>
+- **Phone-first**: no browser microphone or web voice client.
+- **Channel-focused**: Amazon Connect is the only telephony integration.
+- **Explicit call lifecycle**: webhook → accept → WebSocket → tools → hangup.
+- **Per-call isolation**: call metadata, intake state, timers, and WebSockets are keyed per call/contact.
+- **Safe handoff**: transfer and disconnect wait for the final spoken response before ending the OpenAI call leg.
+- **Replaceable product logic**: the included trip-intake and MCP examples demonstrate integration patterns, not production business rules.
+- **Minimal sensitive data**: do not log secrets or unnecessary PII.
 
-### Twilio + AI Phone Agent
+## Main features
 
-<p align="center">
-  <img src="./doc/assets/high-level-design-twilio.png" alt="High-level flow: Twilio IVR, HTTP POST for TwiML, WebSocket media stream, AI Phone Agent session with OpenAI Realtime API" width="720" />
-</p>
+- OpenAI `realtime.call.incoming` webhook handling
+- Realtime session configuration and server-side function tools
+- Structured trip-intake state
+- Transfer-to-human and disconnect tools
+- Optional Amazon Connect `UpdateContactAttributes`
+- Optional MCP example servers
+- `/health` liveness probe, plus `/status` and `/status.json` operational endpoints
 
-## Try it (live)
+## Repository layout
 
-**Call [+1 (855) 522-2348](tel:+18555222348)** — a sample **AI Phone Agent** built from this kit on **Amazon Connect** and OpenAI’s phone integration. The AI behaves like a front-line agent: **real-time** conversation, **trip intent** capture, and answers to **trip-related** questions (demo behavior; not production advice).
+- `src/service/amazon-connect-phone/` — channel bootstrap and OpenAI SIP call lifecycle
+- `src/service/amazon-connect-phone/openai-sip-webhook/agents/` — voice prompts
+- `src/service/amazon-connect-phone/openai-sip-webhook/tools/` — Realtime function tools
+- `src/service/amazon-connect-phone/openai-sip-webhook/websocket/` — per-call WebSocket and hangup scheduling
+- `src/foundation/amazon-connect/` — optional AWS SDK helpers
+- `src/foundation/open-ai/` — OpenAI HTTP helper
+- `src/foundation/mcp-server/` — illustrative MCP servers
+- `src/misc/` — logging and status routes
 
-## Purpose
-
-This starter kit exists to help you **go from zero to a working AI phone agent** without stitching together every integration by trial and error. It provides:
-
-- **Two proven call paths** — **Twilio Media Streams** for programmable voice, and **Amazon Connect** wired to OpenAI’s **phone / SIP** flow (incoming webhook + accept + streaming session).
-- **Realtime voice end-to-end** — bidirectional audio with OpenAI Realtime, plus **function tools** wired for real calls (e.g. trip intake, transfer to agent, disconnect).
-- **Operational glue** — Express HTTP + WebSocket, **`/status`** / **`/status.json`** to see what’s enabled and which URLs to expose through a tunnel (ngrok, etc.).
-- **Optional MCP** — HTTP MCP servers you can attach for richer tools; example **booking** / **post-booking** MCP code is included as **reference only**.
-
-**Scope:** this repo is **phone-only**. It does **not** ship a browser microphone UI or web voice client—only **telephony integrations** (Twilio and Connect) into this backend.
-
-## Key features
-
-- **Realtime phone conversations** — AI answers, interrupts naturally, and responds with low-latency speech via OpenAI Realtime.
-- **Twilio integration** — TwiML entry + **Media Streams** WebSocket (`/twilio-phone/incoming-call`, `/twilio-phone/media-stream`) for classic programmable voice setups.
-- **Amazon Connect integration** — OpenAI **incoming-call** webhook at **`/amazon-connect-phone/incoming-call`** (default; override with `AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH`) + **accept** flow and streaming session in `openai-sip-webhook/` (see docs).
-- **Call tools that matter on the phone** — example tools include structured **trip / intake** updates, **transfer to human**, and **hang up**, with scheduling so transfers don’t cut off the assistant mid-sentence.
-- **Optional MCP servers** — plug in Model Context Protocol HTTP servers for discoverable tools; sample MCP implementations are starting points for your own backends.
-- **TypeScript throughout** — `@/*` path aliases, compiled to `dist/` with **`tsc-alias`** for clean imports.
-
-## Demo code vs. your product
-
-The **booking MCP**, **post-booking MCP**, and **trip-intake-style** tools in this repo are **illustrative**. They show how to wire tools and MCP into a phone agent. **Replace them** with your own agents, prompts, and MCP servers to match your business and compliance requirements.
-
-## Layout
-
-- **`src/foundation/`** — OpenAI agents & helpers, MCP servers, Twilio WebSocket (`/twilio-phone/media-stream`), Amazon Connect SDK.
-- **`src/service/`** — `twilio-phone`, `amazon-connect-phone` (OpenAI SIP webhook under `openai-sip-webhook/`).
-
-TypeScript **`@/*` → `src/*`**; **`tsc-alias`** rewrites imports in `dist/`.
-
-Entry: **`src/index.ts`** — `initTwilioPhoneChannel`, `initAmazonConnectPhoneChannel`, `initMcpServers`.
+TypeScript imports use `@/*` → `src/*`; `tsc-alias` rewrites them in `dist/`.
 
 ## Quick start
 
 ```sh
 npm install
-cp .env.example .env   # set OPENAI_API_KEY, etc.
+cp .env.example .env
 npm run dev
 ```
 
-Server default: `http://localhost:4000`. **`GET /status`** and **`GET /status.json`** list enabled channels and URLs.
+Set at least:
 
-## Environment (summary)
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-realtime-2.1
+AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
+```
 
-See **`.env.example`**. Typical keys:
+Configure OpenAI to send incoming Realtime SIP call webhooks to:
 
-- `OPENAI_API_KEY`, `OPENAI_MODEL` (e.g. `gpt-realtime-1.5`)
-- `PORT` (default `4000`)
-- **Twilio**: `TWILIO_PHONE_ENABLE`, `TWILIO_WEBHOOK_URL` (wss Media Stream URL)
-- **Amazon Connect + SIP**: `AMAZON_CONNECT_PHONE_ENABLE`, `AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH`, optional `AMAZON_CONNECT_SDK_ENABLE` + AWS
+```text
+https://<your-host>/amazon-connect-phone/incoming-call
+```
 
-## Docs
+For contact-attribute updates, also configure `AMAZON_CONNECT_SDK_ENABLE`, `AMAZON_CONNECT_INSTANCE_ID`, `AWS_REGION`, and AWS credentials through your deployment secret manager.
 
-| Doc | Topic |
-|-----|--------|
-| [doc/ai-phone-agent-architecture.md](./doc/ai-phone-agent-architecture.md) | Architecture |
-| [doc/twilio-integration.md](./doc/twilio-integration.md) | Twilio |
-| [doc/amazon-connect-openai-webhook.md](./doc/amazon-connect-openai-webhook.md) | Connect + OpenAI SIP |
-| [doc/local-testing-twilio-and-amazon-connect-sip.md](./doc/local-testing-twilio-and-amazon-connect-sip.md) | ngrok / tunnels |
-| [doc/github-ci.md](./doc/github-ci.md) | PR checks (Prettier, ESLint) & branch protection |
+## Commands
 
-## AI coding assistants (Cursor / Claude Code)
+```sh
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run lint:ci
+npm run format
+npm test
+npm run test:coverage
+```
 
-- **Cursor:** project rules in [`.cursor/rules/`](./.cursor/rules/) (see `.cursor/rules/project.mdc`).
-- **Shared developer context:** [`AGENTS.md`](./AGENTS.md) and [`CLAUDE.md`](./CLAUDE.md) — same content; update **both** when you change them.
-- **Claude Code:** optional config under [`.claude/`](./.claude/README.md).
+## Coding agents
 
-## Scripts
+- `AGENTS.md` is the shared project guidance for coding agents.
+- `CLAUDE.md` imports `AGENTS.md` using Claude Code's supported `@` syntax.
+- `.cursor/rules/` and `.claude/rules/` contain tool-specific, path-scoped rules.
+- `.claude/skills/verify-phone-agent/` provides one Agent Skills-compatible
+  verification workflow that both Claude Code and Cursor can discover.
+- `.claude/settings.json` contains shared Claude Code safety permissions; use the
+  gitignored `.claude/settings.local.json` for personal overrides.
 
-- `npm run dev` — nodemon
-- `npm run build` / `npm run start` — compile + `node dist/index.js`
-- `npm run lint` — ESLint with `--fix` (Airbnb + TS + Prettier; see `eslint.config.mjs`)
-- `npm run lint:ci` — ESLint strict (`--max-warnings 0`, no fix); used in CI
-- `npm run format` — Prettier
+## Documentation
+
+- [Architecture](./doc/ai-phone-agent-architecture.md)
+- [Amazon Connect + OpenAI SIP webhook](./doc/amazon-connect-openai-webhook.md)
+- [Local Amazon Connect testing](./doc/local-testing-amazon-connect-sip.md)
+- [GitHub CI](./doc/github-ci.md)
 
 ## License
 

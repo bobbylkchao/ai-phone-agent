@@ -125,8 +125,15 @@ export const connectOpenAiSipRealtimeWebSocket = (
     } catch {
       message = raw
     }
-    logger.info(
-      { callId, contactId, data: message },
+    const messageType =
+      typeof message === 'object' &&
+      message !== null &&
+      'type' in message &&
+      typeof message.type === 'string'
+        ? message.type
+        : undefined
+    logger.debug(
+      { callId, contactId, type: messageType, data: message },
       '[AmazonConnectPhone] OpenAI SIP WebSocket message'
     )
 

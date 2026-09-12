@@ -1,6 +1,6 @@
 import type { AmazonConnectOpenAiVoiceAgentMetaData } from '../types'
 
-/** Shared with Twilio prompts (`service/twilio-phone/agents/.../conversation*.ts`). */
+/** Core conversation instructions for the Amazon Connect SIP phone agent. */
 export const DEFAULT_BRAND = 'Example Trips'
 
 /**

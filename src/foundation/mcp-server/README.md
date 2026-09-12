@@ -1,1 +1,1 @@
-# This is the example MCP server for the realtime voice agent.
+# Example MCP servers for the AI Phone Agent.

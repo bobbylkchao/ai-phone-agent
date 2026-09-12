@@ -29,8 +29,7 @@ const buildConnectContextSection = (
 
 /**
  * Builds instructions for POST /v1/realtime/calls/{call_id}/accept.
- * SIP uses dedicated intake + handoff prompts (`sip-instructions.ts`), not the Twilio/MCP
- * foundation "front desk" prompts, so the model does not assume a web phone session.
+ * SIP uses dedicated intake and handoff prompts from `sip-instructions.ts`.
  */
 export const getPhoneAgentInstructions = (
   metaData: AmazonConnectOpenAiVoiceAgentMetaData = {}

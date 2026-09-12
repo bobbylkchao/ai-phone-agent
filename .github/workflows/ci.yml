@@ -1,4 +1,4 @@
-# CI for pull requests: Prettier (optional auto-commit) + ESLint (fail on errors/warnings).
+# CI for pull requests: Prettier, ESLint, and Jest coverage.
 # "Require PR before merge" is configured in GitHub → Settings → Branches (see doc/github-ci.md).
 
 name: CI
@@ -79,3 +79,6 @@ jobs:
 
       - name: ESLint (fail on errors or warnings)
         run: npm run lint:ci
+
+      - name: Jest unit tests with coverage
+        run: npm run test:ci

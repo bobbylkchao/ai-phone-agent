@@ -26,7 +26,7 @@ export const acceptOpenAiSipCall = async ({
   }
 
   const instructions = getPhoneAgentInstructions(metaData)
-  const model = process.env.OPENAI_MODEL || 'gpt-realtime-1.5'
+  const model = process.env.OPENAI_MODEL || 'gpt-realtime-2.1'
 
   const url = `https://api.openai.com/v1/realtime/calls/${encodeURIComponent(callId)}/accept`
   const body = {
@@ -38,7 +38,7 @@ export const acceptOpenAiSipCall = async ({
 
   try {
     logger.info(
-      { callId, metaData },
+      { callId, contactId: metaData.contactId },
       '[AmazonConnectPhone] Accepting OpenAI SIP call'
     )
 
