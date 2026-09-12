@@ -20,9 +20,18 @@ const escapeHtml = (s: string): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
+const forwardedProto = (req: Request): string | undefined => {
+  const raw = req.get('x-forwarded-proto')
+  if (!raw) {
+    return undefined
+  }
+  const first = raw.split(',')[0]?.trim().toLowerCase()
+  return first === 'https' || first === 'http' ? first : undefined
+}
+
 const publicBase = (req: Request, port: number): string => {
   const host = req.get('host') || `localhost:${port}`
-  const proto = req.secure ? 'https' : 'http'
+  const proto = forwardedProto(req) ?? (req.secure ? 'https' : 'http')
   return `${proto}://${host}`
 }
 

@@ -1,0 +1,4 @@
+# Normalise line endings: LF in the repository and in every working tree.
+# Matches Prettier's default output and the Linux CI runners, so Windows
+# checkouts no longer report whole files as modified after `npm run format`.
+* text=auto eol=lf
