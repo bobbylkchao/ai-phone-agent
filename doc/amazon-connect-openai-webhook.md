@@ -56,7 +56,7 @@ For local development, see [Local testing: Amazon Connect + OpenAI SIP](./local-
 
 The handler parses SIP headers from the webhook payload:
 
-- **`User-to-User`** — hex-encoded JSON (`;encoding=hex`), decoded into `UserToUserInfo` and mapped into `AmazonConnectOpenAiVoiceAgentMetaData` (`contactId`, `initialContactId`, `queueName`, `initiationMethod`, `customerPhoneNumber`, `systemPhoneNumber`).
+- **`User-to-User`** — hex-encoded JSON (`;encoding=hex`), decoded into `UserToUserInfo` and mapped into `AmazonConnectOpenAiVoiceAgentMetaData` (`contactId`, `initialContactId`, `initiationMethod`, `customerPhoneNumber`, `systemPhoneNumber`).
 
 Extend `openai-sip-webhook/types.ts` and `webhook/incoming-call.ts` if your contact flow sends additional fields.
 

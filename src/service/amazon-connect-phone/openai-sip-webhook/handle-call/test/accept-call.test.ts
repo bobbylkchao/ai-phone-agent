@@ -49,17 +49,17 @@ describe('acceptOpenAiSipCall', () => {
       acceptOpenAiSipCall({
         callId: 'call/1',
         agent,
-        metaData: { contactId: 'contact-1', queueName: 'Sales' },
+        metaData: { contactId: 'contact-1', initiationMethod: 'INBOUND' },
       })
     ).resolves.toEqual({ ok: true })
 
     expect(sendRequestMock).toHaveBeenCalledWith(
-      'https://api.openai.com/v1/realtime/calls/call%2F1/accept',
+      'https://api.openai.com/v1/realtime/calls/call/1/accept',
       'POST',
       expect.objectContaining({
         type: 'realtime',
         model: 'gpt-realtime-2.1',
-        instructions: expect.stringContaining('Queue: Sales'),
+        instructions: expect.stringContaining('Initiation method: INBOUND'),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: 'transfer_to_human_agent' }),
         ]),

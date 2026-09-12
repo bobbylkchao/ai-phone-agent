@@ -40,7 +40,6 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
       JSON.stringify({
         contactId: 'contact-1',
         initialContactId: 'initial-1',
-        queueName: 'Sales',
         initiationMethod: 'INBOUND',
         customerPhoneNumber: '+15550000000',
         systemPhoneNumber: '+15551111111',
@@ -59,7 +58,6 @@ describe('handleOpenAiSipIncomingCallWebhook', () => {
       metaData: {
         contactId: 'contact-1',
         initialContactId: 'initial-1',
-        queueName: 'Sales',
         initiationMethod: 'INBOUND',
         customerPhoneNumber: '+15550000000',
         systemPhoneNumber: '+15551111111',

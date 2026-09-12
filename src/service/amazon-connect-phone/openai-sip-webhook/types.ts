@@ -21,7 +21,6 @@ export interface VoiceAgentDefinition {
 export interface AmazonConnectOpenAiVoiceAgentMetaData {
   contactId?: string
   initialContactId?: string
-  queueName?: string
   initiationMethod?: string
   customerPhoneNumber?: string
   systemPhoneNumber?: string
@@ -34,7 +33,6 @@ export interface AmazonConnectOpenAiVoiceAgentMetaData {
 export interface UserToUserInfo {
   contactId?: string
   initialContactId?: string
-  queueName?: string
   initiationMethod?: string
   customerPhoneNumber?: string
   systemPhoneNumber?: string

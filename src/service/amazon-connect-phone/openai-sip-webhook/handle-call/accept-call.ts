@@ -31,7 +31,7 @@ export const acceptOpenAiSipCall = async ({
   const instructions = getPhoneAgentInstructions(agent, metaData)
   const model = process.env.OPENAI_MODEL || 'gpt-realtime-2.1'
 
-  const url = `https://api.openai.com/v1/realtime/calls/${encodeURIComponent(callId)}/accept`
+  const url = `https://api.openai.com/v1/realtime/calls/${callId}/accept`
   const body = {
     type: 'realtime',
     model,

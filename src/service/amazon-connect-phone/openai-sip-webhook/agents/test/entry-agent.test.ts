@@ -19,7 +19,6 @@ describe('getPhoneAgentInstructions', () => {
     const instructions = getPhoneAgentInstructions(agent, {
       contactId: 'contact-1',
       initialContactId: 'initial-1',
-      queueName: 'Sales',
       initiationMethod: 'INBOUND',
       customerPhoneNumber: '+15550000000',
       systemPhoneNumber: '+15551111111',
@@ -28,7 +27,6 @@ describe('getPhoneAgentInstructions', () => {
     expect(instructions).toContain('Amazon Connect session context')
     expect(instructions).toContain('Contact ID: contact-1')
     expect(instructions).toContain('Initial contact ID: initial-1')
-    expect(instructions).toContain('Queue: Sales')
     expect(instructions).toContain('Initiation method: INBOUND')
     expect(instructions).toContain(
       'Customer phone (from Connect): +15550000000'

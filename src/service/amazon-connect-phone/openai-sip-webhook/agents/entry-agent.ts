@@ -11,7 +11,6 @@ const buildConnectContextSection = (
   if (meta.contactId) lines.push(`- Contact ID: ${meta.contactId}`)
   if (meta.initialContactId)
     lines.push(`- Initial contact ID: ${meta.initialContactId}`)
-  if (meta.queueName) lines.push(`- Queue: ${meta.queueName}`)
   if (meta.initiationMethod)
     lines.push(`- Initiation method: ${meta.initiationMethod}`)
   if (meta.customerPhoneNumber)

@@ -66,7 +66,6 @@ export const createOpenAiSipIncomingCallWebhook =
         {
           callId,
           contactId: userToUserData?.contactId,
-          queueName: userToUserData?.queueName,
         },
         '[AmazonConnectPhone] realtime.call.incoming received'
       )
@@ -75,7 +74,6 @@ export const createOpenAiSipIncomingCallWebhook =
       const metaData: AmazonConnectOpenAiVoiceAgentMetaData = {
         contactId: userToUserData?.contactId,
         initialContactId: userToUserData?.initialContactId,
-        queueName: userToUserData?.queueName,
         initiationMethod: userToUserData?.initiationMethod,
         customerPhoneNumber: userToUserData?.customerPhoneNumber,
         systemPhoneNumber: userToUserData?.systemPhoneNumber,

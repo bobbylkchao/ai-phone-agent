@@ -98,6 +98,41 @@ For optional contact-attribute updates, configure
 `AMAZON_CONNECT_SDK_ENABLE`, `AMAZON_CONNECT_INSTANCE_ID`, `AWS_REGION`, and
 AWS credentials through your deployment secret manager.
 
+## Local end-to-end testing with ngrok
+
+Amazon Connect and OpenAI carry the audio between themselves, so a laptop only
+has to expose one HTTP webhook over public HTTPS. With a tunnel in front of the
+dev server you can dial a real phone number and talk to the agent running on
+your machine:
+
+```text
+Your phone → Amazon Connect → OpenAI SIP / Realtime
+  → ngrok → localhost:4000
+```
+
+Start the server and the tunnel:
+
+```sh
+npm run dev
+ngrok http 4000
+```
+
+Point the OpenAI `realtime.call.incoming` webhook at the tunnel URL:
+
+```text
+https://<subdomain>.ngrok-free.app/amazon-connect-phone/incoming-call
+```
+
+Open `http://localhost:4000/status` to confirm the Amazon Connect phone channel
+is ready, then place a test call and watch the logs for the incoming event, the
+accept, and the Realtime WebSocket connection.
+
+No public WebSocket endpoint is needed — this service dials out to OpenAI after
+accepting the call. Cloudflare Tunnel works the same way. On the free ngrok
+plan the URL changes on every restart, so update the OpenAI webhook each time.
+
+Full checklist: [Local Amazon Connect testing](./doc/local-testing-amazon-connect-sip.md).
+
 ## Commands
 
 ```sh

@@ -59,8 +59,8 @@ configures the session, handles server-side tools, and controls the call leg.
 - injection of the active `VoiceAgentDefinition`.
 
 The supported example UUI shape is intentionally limited to generic Connect
-call metadata: `contactId`, `initialContactId`, `queueName`,
-`initiationMethod`, `customerPhoneNumber`, and `systemPhoneNumber`.
+call metadata: `contactId`, `initialContactId`, `initiationMethod`,
+`customerPhoneNumber`, and `systemPhoneNumber`.
 
 ### Generic foundations
 
