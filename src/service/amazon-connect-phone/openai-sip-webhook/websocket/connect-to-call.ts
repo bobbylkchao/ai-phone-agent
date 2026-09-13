@@ -15,6 +15,11 @@ import {
   clearTransferHangupSchedule,
   noteTransferResponseDone,
 } from './transfer-hangup-scheduler'
+import {
+  clearMcpResponseContinuation,
+  continueResponseAfterMcpCall,
+} from './mcp-response-continuation'
+import { logRealtimeEvent } from './realtime-event-log'
 
 /** Key = contactId || callId for concurrent calls. */
 const wsByKey = new Map<string, WebSocket>()
@@ -61,6 +66,7 @@ export const closeOpenAiSipWebSocketForCall = (callId: string): void => {
   const key = contactId || callId
   clearTransferHangupSchedule(callId)
   clearDisconnectHangupSchedule(callId)
+  clearMcpResponseContinuation(callId)
   clearConversationTimeout(key)
   const ws = wsByKey.get(key)
   if (ws) {
@@ -138,8 +144,10 @@ export const connectOpenAiSipRealtimeWebSocket = (
       '[AmazonConnectPhone] OpenAI SIP WebSocket message'
     )
 
+    logRealtimeEvent(callId, contactId, message)
     noteTransferResponseDone(callId, message)
     noteDisconnectResponseDone(callId, message)
+    continueResponseAfterMcpCall(callId, message, ws)
     await handleMessageIfToolCall(callId, message, ws, agentTools)
   })
 

@@ -17,6 +17,7 @@ Copy `.env.example` to `.env` and set:
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-realtime-2.1
 AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
+HOTEL_BOOKING_MCP_SERVER_URL=https://example.ngrok-free.app/hotel-booking-mcp
 ```
 
 Optional Amazon Connect contact-attribute updates:
@@ -49,6 +50,15 @@ If the tunnel URL is `https://example.ngrok-free.app`, configure the OpenAI inco
 ```text
 https://example.ngrok-free.app/amazon-connect-phone/incoming-call
 ```
+
+Set `HOTEL_BOOKING_MCP_SERVER_URL` to the MCP endpoint on that same tunnel:
+
+```env
+HOTEL_BOOKING_MCP_SERVER_URL=https://example.ngrok-free.app/hotel-booking-mcp
+```
+
+OpenAI connects to this public Streamable HTTP endpoint and exposes its
+`search-hotel` tool directly to the Realtime phone session.
 
 No public WebSocket endpoint is required. This service opens an outbound WebSocket to OpenAI after accepting the call.
 

@@ -36,7 +36,7 @@ export const acceptOpenAiSipCall = async ({
     type: 'realtime',
     model,
     instructions,
-    tools: getRealtimeToolsConfig(agent.tools),
+    tools: getRealtimeToolsConfig(agent.tools, agent.getMcpServers?.()),
   }
 
   try {

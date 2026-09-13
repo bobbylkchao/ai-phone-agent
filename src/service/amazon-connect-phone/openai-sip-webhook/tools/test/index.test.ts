@@ -1,5 +1,6 @@
 import type WebSocket from 'ws'
 import { z } from 'zod'
+import type { VoiceAgentMcpServer } from '../../types'
 import { queueDisconnectToolArguments } from '../../websocket/disconnect-hangup-scheduler'
 import { queueTransferToolArguments } from '../../websocket/transfer-hangup-scheduler'
 import {
@@ -29,6 +30,13 @@ const exampleTool: VoiceAgentTool = {
   execute: executeExampleTool,
 }
 
+const exampleMcpServer: VoiceAgentMcpServer = {
+  serverLabel: 'example',
+  serverUrl: 'https://phone.example/mcp',
+  allowedTools: ['search'],
+  requireApproval: 'never',
+}
+
 describe('Realtime tool registry', () => {
   const callId = 'call-1'
 
@@ -44,6 +52,20 @@ describe('Realtime tool registry', () => {
       ])
     )
     expect(getRealtimeToolsConfig()).toHaveLength(2)
+  })
+
+  it('publishes configured Remote MCP servers', () => {
+    expect(getRealtimeToolsConfig([], [exampleMcpServer])).toEqual(
+      expect.arrayContaining([
+        {
+          type: 'mcp',
+          server_label: 'example',
+          server_url: 'https://phone.example/mcp',
+          allowed_tools: ['search'],
+          require_approval: 'never',
+        },
+      ])
+    )
   })
 
   it('parses string and object arguments for an injected tool', async () => {

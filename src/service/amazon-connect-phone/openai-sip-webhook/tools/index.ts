@@ -1,5 +1,5 @@
 import type WebSocket from 'ws'
-import type { VoiceAgentTool } from '../types'
+import type { VoiceAgentMcpServer, VoiceAgentTool } from '../types'
 import {
   sendFunctionCallOutput,
   sendResponseCreateEvent,
@@ -20,21 +20,44 @@ const getVoiceAgentTools = (
   agentTools: VoiceAgentTool[] = []
 ): VoiceAgentTool[] => [...coreVoiceAgentTools, ...agentTools]
 
-/** Realtime function tools for POST .../realtime/calls/{call_id}/accept */
-export const getRealtimeToolsConfig = (
-  agentTools: VoiceAgentTool[] = []
-): Array<{
+export interface RealtimeFunctionToolConfig {
   type: 'function'
   name: string
   description: string
   parameters: unknown
-}> =>
-  getVoiceAgentTools(agentTools).map((tool) => ({
+}
+
+export interface RealtimeMcpToolConfig {
+  type: 'mcp'
+  server_label: string
+  server_url: string
+  allowed_tools?: string[]
+  require_approval?: 'always' | 'never'
+}
+
+/** Realtime tools for POST .../realtime/calls/{call_id}/accept */
+export const getRealtimeToolsConfig = (
+  agentTools: VoiceAgentTool[] = [],
+  mcpServers: VoiceAgentMcpServer[] = []
+): Array<RealtimeFunctionToolConfig | RealtimeMcpToolConfig> => [
+  ...getVoiceAgentTools(agentTools).map((tool) => ({
     type: 'function' as const,
     name: tool.name,
     description: tool.description,
     parameters: tool.parametersJsonSchema,
-  }))
+  })),
+  ...mcpServers.map((server) => ({
+    type: 'mcp' as const,
+    server_label: server.serverLabel,
+    server_url: server.serverUrl,
+    ...(server.allowedTools
+      ? { allowed_tools: server.allowedTools }
+      : undefined),
+    ...(server.requireApproval
+      ? { require_approval: server.requireApproval }
+      : undefined),
+  })),
+]
 
 export const executeTool = async (
   callId: string,

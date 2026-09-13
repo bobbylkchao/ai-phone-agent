@@ -37,15 +37,17 @@ does not proxy audio.
 `src/example/hotel-booking/` contains a deliberately small hotel-booking
 example:
 
-- a phone prompt that greets the caller and asks which city they plan to visit;
-- the generic transfer-to-human fallback;
-- a standalone `search-hotel` MCP stub at `POST /hotel-booking-mcp`.
+- a phone prompt that greets the caller, tells them they can ask for a person at
+  any time, and asks which city they plan to visit;
+- a `search-hotel` MCP tool the agent calls during the phone conversation;
+- the generic transfer-to-human fallback, used only when the caller asks for it;
+- a mock hotel inventory served at `POST /hotel-booking-mcp`.
 
-The MCP endpoint returns placeholder data and is **not connected to the phone
-agent** in this example. This keeps the boundary explicit. To make it callable
-from a Realtime session, deploy an MCP server at a public HTTPS URL and add it
-as a Realtime Remote MCP tool, or implement an application-owned function-tool
-adapter. Replace the stub with a real provider such as Expedia in your product.
+Set `HOTEL_BOOKING_MCP_SERVER_URL` to the public HTTPS endpoint. The active
+`VoiceAgentDefinition` attaches it to the Realtime session as a Remote MCP
+server, restricted to `search-hotel`, so OpenAI performs the mock search before
+the assistant names hotels or rates. Replace that URL with a compatible
+production provider such as Expedia without changing the Connect/SIP core.
 
 ## Generic foundation
 
@@ -86,6 +88,7 @@ Set at least:
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-realtime-2.1
 AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
+HOTEL_BOOKING_MCP_SERVER_URL=https://<your-host>/hotel-booking-mcp
 ```
 
 Configure OpenAI to send incoming Realtime SIP call webhooks to:
@@ -121,6 +124,12 @@ Point the OpenAI `realtime.call.incoming` webhook at the tunnel URL:
 
 ```text
 https://<subdomain>.ngrok-free.app/amazon-connect-phone/incoming-call
+```
+
+Use the same tunnel for the mock MCP server:
+
+```env
+HOTEL_BOOKING_MCP_SERVER_URL=https://<subdomain>.ngrok-free.app/hotel-booking-mcp
 ```
 
 Open `http://localhost:4000/status` to confirm the Amazon Connect phone channel

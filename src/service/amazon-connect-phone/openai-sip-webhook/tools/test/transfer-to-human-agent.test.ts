@@ -29,6 +29,15 @@ describe('transfer_to_human_agent tool', () => {
     }
   })
 
+  it('allows transfer only after an explicit caller request', () => {
+    expect(transferToHumanAgentTool.description).toContain(
+      'only after the caller explicitly asks'
+    )
+    expect(transferToHumanAgentTool.description).toContain(
+      'Do not suggest or initiate a transfer'
+    )
+  })
+
   it('writes handoff attributes before cleaning up the call', async () => {
     process.env.AMAZON_CONNECT_SDK_ENABLE = 'true'
     setContactId('call-1', 'contact-1')

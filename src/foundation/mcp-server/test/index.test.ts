@@ -27,6 +27,8 @@ describe('generic MCP HTTP host', () => {
   const definition: HttpMcpServerDefinition = {
     name: 'example-server',
     path: '/example-mcp',
+    serverLabel: 'example_server',
+    toolNames: ['example-tool'],
     registerTools,
   }
   let routes: Map<string, RouteHandler>

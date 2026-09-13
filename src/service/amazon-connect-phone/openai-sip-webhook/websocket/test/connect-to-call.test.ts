@@ -9,6 +9,8 @@ import {
 } from '../connect-to-call'
 import { noteDisconnectResponseDone } from '../disconnect-hangup-scheduler'
 import { noteTransferResponseDone } from '../transfer-hangup-scheduler'
+import { continueResponseAfterMcpCall } from '../mcp-response-continuation'
+import { logRealtimeEvent } from '../realtime-event-log'
 
 jest.mock('ws')
 jest.mock('../../tools', () => ({
@@ -21,6 +23,13 @@ jest.mock('../disconnect-hangup-scheduler', () => ({
 jest.mock('../transfer-hangup-scheduler', () => ({
   clearTransferHangupSchedule: jest.fn(),
   noteTransferResponseDone: jest.fn(),
+}))
+jest.mock('../mcp-response-continuation', () => ({
+  clearMcpResponseContinuation: jest.fn(),
+  continueResponseAfterMcpCall: jest.fn(),
+}))
+jest.mock('../realtime-event-log', () => ({
+  logRealtimeEvent: jest.fn(),
 }))
 
 type FakeSocket = EventEmitter & { close: jest.Mock; send: jest.Mock }
@@ -91,6 +100,14 @@ describe('OpenAI SIP Realtime WebSocket', () => {
     expect(noteDisconnectResponseDone).toHaveBeenCalledWith(
       'call-1',
       'not-json'
+    )
+    expect(logRealtimeEvent).toHaveBeenCalledWith('call-1', '', {
+      type: 'response.done',
+    })
+    expect(continueResponseAfterMcpCall).toHaveBeenCalledWith(
+      'call-1',
+      { type: 'response.done' },
+      socket
     )
     expect(handleMessageIfToolCall).toHaveBeenCalled()
 

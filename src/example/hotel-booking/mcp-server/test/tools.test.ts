@@ -4,17 +4,38 @@ import { registerHotelSearchTools, searchHotelsStub } from '../tools'
 type ToolHandler = (args: { city: string }) => Promise<unknown>
 
 describe('hotel search MCP stub', () => {
-  it('returns deterministic placeholder hotels for the requested city', () => {
-    expect(searchHotelsStub('Chicago')).toEqual([
-      expect.objectContaining({
-        name: 'Example Central Hotel',
-        city: 'Chicago',
-      }),
-      expect.objectContaining({
-        name: 'Example Riverside Hotel',
-        city: 'Chicago',
-      }),
-    ])
+  it('returns the mock hotels, fully described, for the requested city', () => {
+    const hotels = searchHotelsStub('Chicago')
+
+    expect(hotels).toHaveLength(8)
+    hotels.forEach((hotel) => {
+      expect(hotel).toEqual(
+        expect.objectContaining({
+          name: expect.any(String),
+          city: 'Chicago',
+          neighborhood: expect.any(String),
+          starRating: expect.any(Number),
+          nightlyRate: expect.any(Number),
+          currency: 'USD',
+          availableRooms: expect.any(Number),
+          freeCancellation: expect.any(Boolean),
+          amenities: expect.arrayContaining([expect.any(String)]),
+        })
+      )
+      expect(hotel.nightlyRate).toBeGreaterThan(0)
+      expect(hotel.availableRooms).toBeGreaterThan(0)
+    })
+
+    const names = hotels.map((hotel) => hotel.name)
+    expect(new Set(names).size).toBe(names.length)
+  })
+
+  it('returns the same inventory regardless of city', () => {
+    const withoutCity = (city: string) =>
+      searchHotelsStub(city).map(({ city: _city, ...hotel }) => hotel)
+
+    expect(withoutCity('Chicago')).toEqual(withoutCity('Toronto'))
+    expect(searchHotelsStub(' Toronto ')[0]?.city).toBe('Toronto')
   })
 
   it('registers a callable search-hotel MCP tool', async () => {

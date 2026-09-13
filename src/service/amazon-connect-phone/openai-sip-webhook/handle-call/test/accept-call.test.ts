@@ -15,6 +15,14 @@ const sendRequestMock = jest.mocked(sendHttpRequestToOpenAi)
 const connectWebSocketMock = jest.mocked(connectOpenAiSipRealtimeWebSocket)
 const agent: VoiceAgentDefinition = {
   getInstructions: () => 'You are a test voice agent.',
+  getMcpServers: () => [
+    {
+      serverLabel: 'hotel_booking',
+      serverUrl: 'https://phone.example/hotel-booking-mcp',
+      allowedTools: ['search-hotel'],
+      requireApproval: 'never',
+    },
+  ],
 }
 
 describe('acceptOpenAiSipCall', () => {
@@ -62,6 +70,11 @@ describe('acceptOpenAiSipCall', () => {
         instructions: expect.stringContaining('Initiation method: INBOUND'),
         tools: expect.arrayContaining([
           expect.objectContaining({ name: 'transfer_to_human_agent' }),
+          expect.objectContaining({
+            type: 'mcp',
+            server_label: 'hotel_booking',
+            server_url: 'https://phone.example/hotel-booking-mcp',
+          }),
         ]),
       })
     )

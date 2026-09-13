@@ -3,9 +3,18 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import type { Express } from 'express'
 import logger from '@/misc/logger'
 
+/**
+ * Everything about one MCP server: how this process hosts it, and how a
+ * Realtime session refers to it. Keeping both here means a path or tool rename
+ * cannot silently drift away from the allowlist sent to OpenAI.
+ */
 export interface HttpMcpServerDefinition {
   name: string
   path: `/${string}`
+  /** Label OpenAI Realtime uses for this server. Letters, digits, `_` and `-`. */
+  serverLabel: string
+  /** Tools `registerTools` adds, and therefore the Realtime allowlist. */
+  toolNames: string[]
   registerTools: (server: McpServer) => void
 }
 

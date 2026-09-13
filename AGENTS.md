@@ -62,6 +62,6 @@ npm run test:coverage
 ## Demo vs product
 
 The hotel-booking prompt and hotel-search MCP stub are **illustrative**. The MCP
-stub is not connected to the phone session. Replace the active agent definition,
-tool implementations, authorization, persistence, and compliance rules in a
-real product.
+stub is connected to the phone session through Realtime Remote MCP when
+`HOTEL_BOOKING_MCP_SERVER_URL` is set. Replace the active agent definition, MCP
+provider, authorization, persistence, and compliance rules in a real product.

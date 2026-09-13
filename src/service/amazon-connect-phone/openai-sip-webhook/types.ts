@@ -9,9 +9,21 @@ export interface VoiceAgentTool {
   execute: (callId: string, args: unknown) => Promise<unknown>
 }
 
+export interface VoiceAgentMcpServer {
+  serverLabel: string
+  serverUrl: string
+  allowedTools?: string[]
+  requireApproval?: 'always' | 'never'
+}
+
 export interface VoiceAgentDefinition {
   getInstructions: (metaData: AmazonConnectOpenAiVoiceAgentMetaData) => string
   tools?: VoiceAgentTool[]
+  /**
+   * Resolved at call-accept time, after environment variables are loaded.
+   * Remote MCP servers must be reachable by OpenAI over public HTTPS.
+   */
+  getMcpServers?: () => VoiceAgentMcpServer[]
 }
 
 /**

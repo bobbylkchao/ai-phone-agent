@@ -74,14 +74,19 @@ call metadata: `contactId`, `initialContactId`, `initiationMethod`,
 
 `src/example/hotel-booking/` contains:
 
-- a minimal prompt that asks which city the caller plans to visit;
-- a `search-hotel` MCP stub returning placeholder data;
+- a minimal prompt that asks which city the caller plans to visit and tells the
+  caller they can request a human agent at any time;
+- a `search-hotel` MCP stub returning a fixed list of mock hotels (name,
+  neighborhood, star rating, nightly rate, rooms left, cancellation, amenities);
+- a `VoiceAgentDefinition.getMcpServers` configuration that attaches the public
+  stub endpoint to the Realtime phone session;
 - no production brand, provider, persistence, checkout, or cancellation logic.
 
-The MCP endpoint is independently runnable but is not attached to the phone
-session. A production application can deploy an MCP server publicly and add it
-to Realtime as a Remote MCP tool, or inject a function tool that calls a private
-backend.
+Set `HOTEL_BOOKING_MCP_SERVER_URL` to the deployed or tunneled public HTTPS
+endpoint. The core adds it to the call-accept payload as a Realtime Remote MCP
+tool with `allowed_tools: ["search-hotel"]`. OpenAI executes the mock search
+directly; a production application can replace the URL with a compatible MCP
+provider without changing the Connect/SIP core.
 
 ## Tool lifecycle
 
@@ -101,8 +106,13 @@ the final sentence before the OpenAI leg ends:
 4. An environment-configurable audio-tail delay expires.
 5. Contact attributes are optionally updated and the OpenAI call is hung up.
 
-Transfer remains a generic fallback so callers can always ask for a human when
-the model cannot provide a satisfactory result.
+Transfer remains a generic fallback that the model invokes only after the
+caller explicitly asks to speak with a human.
+
+Remote MCP servers use `VoiceAgentDefinition.getMcpServers`. They are resolved
+at call-accept time and sent to OpenAI with their public HTTPS URL, allowlist,
+and approval policy. OpenAI owns their tool-call lifecycle; this service's
+sideband handler continues to own only local function tools.
 
 ## State and scaling
 

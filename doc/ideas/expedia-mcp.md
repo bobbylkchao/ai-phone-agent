@@ -7,9 +7,9 @@ Connect/SIP core.
 ## Why
 
 The hotel example currently hosts a local `search-hotel` stub at
-`POST /hotel-booking-mcp`. It is **not** attached to the phone session. Expedia
-already publishes an MCP server for travel recommendations, which is the natural
-replacement for that stub.
+`POST /hotel-booking-mcp` and attaches its public HTTPS URL to the phone session
+through Realtime Remote MCP. Expedia already publishes an MCP server for travel
+recommendations, which is the natural replacement for that stub.
 
 ## What exists
 
@@ -35,7 +35,7 @@ Hotel query shape from their README (illustrative):
 
 ## How it would attach here
 
-Two options, same foundation:
+The example now uses option 1:
 
 1. **Realtime Remote MCP** — deploy Expedia MCP (or a thin proxy) at a public
    HTTPS URL and add `{ type: "mcp", server_url, allowed_tools }` on call
@@ -44,8 +44,8 @@ Two options, same foundation:
    `hotelBookingAgent.tools` and have this server call Expedia MCP. Easier
    locally; more code in the app.
 
-Prefer option 1 for the open-source story (“swap the MCP URL”). Use option 2
-only if we cannot expose HTTPS or need to sanitize/limit results first.
+Keep option 1 for the open-source story (“swap the MCP URL”). Use option 2 only
+if we cannot expose HTTPS or need to sanitize/limit results first.
 
 ## Constraints
 
@@ -59,5 +59,5 @@ only if we cannot expose HTTPS or need to sanitize/limit results first.
 1. Run the Expedia MCP locally with a sandbox/test key; call hotel search
    against a city such as Chicago.
 2. Compare tool names and input schema with our stub.
-3. Decide Remote MCP vs function-tool adapter.
-4. If we go Remote MCP, document the public HTTPS / tunnel requirement.
+3. Test its public HTTPS endpoint as a drop-in replacement for
+   `HOTEL_BOOKING_MCP_SERVER_URL`.

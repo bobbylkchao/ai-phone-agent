@@ -65,7 +65,7 @@ export const runTransferToHumanAgentHangup = async (
 export const transferToHumanAgentTool = {
   name: 'transfer_to_human_agent',
   description:
-    'Call when the caller explicitly asks for a human agent or when the assistant cannot safely satisfy the request. Briefly tell the caller they are being transferred before using this tool. This ends the AI portion of the call so Amazon Connect can continue routing.',
+    'Call only after the caller explicitly asks to speak with a human agent. Do not suggest or initiate a transfer yourself. Briefly tell the caller they are being transferred before using this tool. This ends the AI portion of the call so Amazon Connect can continue routing.',
   parameters: transferSchema,
   parametersJsonSchema: transferToHumanAgentParametersJsonSchema,
   execute: async (callId: string, args: unknown): Promise<void> => {
