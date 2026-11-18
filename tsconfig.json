@@ -2,18 +2,17 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "target": "es6",
+    "target": "es2022",
     "module": "commonjs",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
-    "baseUrl": "./src",
     "types": ["node", "jest"],
-    "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

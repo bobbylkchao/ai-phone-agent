@@ -43,7 +43,8 @@ example:
 - the generic transfer-to-human fallback, used only when the caller asks for it;
 - a mock hotel inventory served at `POST /hotel-booking-mcp`.
 
-Set `HOTEL_BOOKING_MCP_SERVER_URL` to the public HTTPS endpoint. The active
+Set `HOTEL_BOOKING_MCP_SERVER_URL` to the public HTTPS endpoint (leave it empty
+to run without the MCP search). The active
 `VoiceAgentDefinition` attaches it to the Realtime session as a Remote MCP
 server, restricted to `search-hotel`, so OpenAI performs the mock search before
 the assistant names hotels or rates. Replace that URL with a compatible
@@ -76,6 +77,8 @@ scenario, create a new `VoiceAgentDefinition` and inject it there instead of
 
 ## Quick start
 
+Requires Node.js 22.13 or newer; Node 24 LTS is recommended (see `.nvmrc`).
+
 ```sh
 npm install
 cp .env.example .env
@@ -88,6 +91,11 @@ Set at least:
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-realtime-2.1
 AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
+```
+
+Optionally enable the example hotel-search MCP tool:
+
+```env
 HOTEL_BOOKING_MCP_SERVER_URL=https://<your-host>/hotel-booking-mcp
 ```
 
@@ -153,6 +161,7 @@ npm run lint:ci
 npm run format
 npm test
 npm run test:coverage
+npm run test:ci
 ```
 
 ## Documentation

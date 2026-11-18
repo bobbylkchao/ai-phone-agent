@@ -4,7 +4,7 @@ The call audio flows directly between Amazon Connect and OpenAI. Local testing o
 
 ## Prerequisites
 
-- Node.js 20.19 or newer
+- Node.js 22.13 or newer (Node 24 LTS recommended, see `.nvmrc`)
 - an OpenAI API key with Realtime SIP access
 - Amazon Connect configured to route calls to the OpenAI SIP endpoint
 - an HTTPS tunnel such as ngrok or Cloudflare Tunnel
@@ -17,6 +17,7 @@ Copy `.env.example` to `.env` and set:
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-realtime-2.1
 AMAZON_CONNECT_PHONE_WEBHOOK_BASE_PATH=/amazon-connect-phone
+# Optional; leave empty to run without the example MCP search.
 HOTEL_BOOKING_MCP_SERVER_URL=https://example.ngrok-free.app/hotel-booking-mcp
 ```
 

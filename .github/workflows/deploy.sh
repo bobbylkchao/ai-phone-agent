@@ -28,7 +28,7 @@ git reset --hard "origin/$BRANCH"
 git pull
 
 echo "🔧 Installing dependencies..."
-npm i
+npm ci
 
 echo "🔨 Building..."
 npm run build
