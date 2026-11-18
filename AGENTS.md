@@ -1,7 +1,7 @@
 # Agent instructions (developers)
 
-This is the shared source of project guidance for coding agents. Claude Code
-loads it through the import in `CLAUDE.md`.
+This is the shared source of project guidance for coding agents. Cursor reads
+it directly; Claude Code loads it through the import in `CLAUDE.md`.
 
 ## What this repo is
 
@@ -21,6 +21,13 @@ loads it through the import in `CLAUDE.md`.
 
 Imports use **`@/*` → `src/*`**; build uses **`tsc-alias`** for `dist/`.
 `tsconfig.build.json` keeps `src/**/test/**` out of `dist/`.
+
+## Toolchain
+
+- **Node.js** `>=22.13.0` (`engines.node`); `.nvmrc` pins the recommended LTS major used by CI.
+- **TypeScript** stays on `~6.0` until `typescript-eslint` supports 7. Don't reintroduce `baseUrl`, `ignoreDeprecations`, or other options TypeScript 7 removes.
+- **Jest** transpiles with SWC and does not type-check; `npm run build` is the type check.
+- **Dependencies** — keep `npm audit --audit-level=high` clean. `overrides` in `package.json` pin patched transitive dev tooling; drop each one once upstream resolves a fixed version.
 
 ## Conventions
 
@@ -49,7 +56,11 @@ npm run lint:ci
 npm run format
 npm test
 npm run test:coverage
+npm run test:ci
 ```
+
+Before finishing a change, run the `verify-phone-agent` skill
+(`.claude/skills/verify-phone-agent/`); it mirrors CI.
 
 ## Docs index
 
@@ -57,6 +68,7 @@ npm run test:coverage
 - [doc/ai-phone-agent-architecture.md](./doc/ai-phone-agent-architecture.md)
 - [doc/amazon-connect-openai-webhook.md](./doc/amazon-connect-openai-webhook.md)
 - [doc/local-testing-amazon-connect-sip.md](./doc/local-testing-amazon-connect-sip.md)
+- [doc/github-ci.md](./doc/github-ci.md) — CI, Dependabot, and deploy workflow
 - [doc/ideas/](./doc/ideas/) — exploration notes (not product spec)
 
 ## Demo vs product

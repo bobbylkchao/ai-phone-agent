@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/**/*.{ts,tsx}"
+  - "src/**/*.ts"
 ---
 
 # TypeScript style

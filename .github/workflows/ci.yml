@@ -1,4 +1,4 @@
-# CI for pull requests: Prettier, ESLint, and Jest coverage.
+# CI for pull requests: Prettier, ESLint, Jest coverage, type-check build, and dependency audit.
 # "Require PR before merge" is configured in GitHub → Settings → Branches (see doc/github-ci.md).
 
 name: CI
@@ -12,24 +12,25 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
   format:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout PR head branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -62,23 +63,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head branch (latest, includes any format push)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit dependencies (high and critical)
+        run: npm audit --audit-level=high
 
       - name: ESLint (fail on errors or warnings)
         run: npm run lint:ci
 
       - name: Jest unit tests with coverage
         run: npm run test:ci
+
+      - name: Type-check and build
+        run: npm run build
+
+  node-22:
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head branch (latest, includes any format push)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          persist-credentials: false
+
+      - name: Setup Node.js 22 (minimum supported major)
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Jest unit tests
+        run: npm test
+
+      - name: Type-check and build
+        run: npm run build

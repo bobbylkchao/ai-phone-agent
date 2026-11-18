@@ -1,6 +1,6 @@
 ---
 description: TypeScript style — prefer arrow functions and consistent callbacks
-globs: "src/**/*.{ts,tsx}"
+globs: src/**/*.ts
 alwaysApply: false
 ---
 
